@@ -18,15 +18,15 @@ pipeline {
         
         stage('Deploy to Kubernetes') {
             steps {
-                echo 'Deploying application manifests to K8s cluster...'
-                // כאן נגדיר בהמשך את פקודות ה-kubectl או ה-Helm להרמת המיקרו-שירותים
+                echo 'Applying Kubernetes manifests from k8s/ directory...'
+                sh 'kubectl apply -f k8s/'
             }
         }
     }
     
     post {
         success {
-            echo 'Pipeline completed successfully!'
+            echo 'Pipeline completed successfully and deployed to K8s!'
         }
         failure {
             echo 'Pipeline failed. Please check the logs.'
