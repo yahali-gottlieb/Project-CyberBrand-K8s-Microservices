@@ -18,8 +18,15 @@ pipeline {
         
         stage('Deploy to Kubernetes') {
             steps {
-                echo 'Applying Kubernetes manifests from k8s/ directory...'
-                sh 'kubectl apply -f k8s/'
+                echo 'Downloading kubectl and deploying manifests to K8s...'
+                sh '''
+                    # Download kubectl binary locally
+                    curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+                    chmod +x kubectl
+                    
+                    # Apply manifests using the local binary
+                    ./kubectl apply -f k8s/
+                '''
             }
         }
     }
