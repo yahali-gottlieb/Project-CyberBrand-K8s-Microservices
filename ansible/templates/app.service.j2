@@ -1,0 +1,16 @@
+[Unit]
+Description=DevOps Python Backend Application
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/app/backend
+Environment="DB_HOST={{ rds_endpoint }}"
+Environment="DB_USER=dbadmin"
+Environment="DB_PASS={{ db_password }}"
+Environment="DB_NAME=appdb"
+ExecStart=/home/ubuntu/app/venv/bin/python app.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,5 @@
+pydantic
+Flask
+Flask-Cors
+psycopg2-binary
+boto3

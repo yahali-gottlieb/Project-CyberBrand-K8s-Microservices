@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CYBER BRAND QUIZ // Ultimate Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Heebo:wght@300;500;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Heebo', 'sans-serif'],
+                        cyber: ['Orbitron', 'sans-serif'],
+                    },
+                    colors: {
+                        cyber: {
+                            dark: '#050511',
+                            panel: 'rgba(12, 12, 32, 0.6)',
+                            cyan: '#00f0ff',
+                            pink: '#ff003c',
+                            purple: '#b000ff',
+                            green: '#00ff66'
+                        }
+                    },
+                    animation: {
+                        'glow-pulse': 'glow 2s ease-in-out infinite alternate',
+                        'float': 'float 4s ease-in-out infinite',
+                        'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
+                        'pop': 'pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards'
+                    },
+                    keyframes: {
+                        glow: {
+                            '0%': { boxShadow: '0 0 10px #00f0ff, inset 0 0 10px #00f0ff' },
+                            '100%': { boxShadow: '0 0 30px #00f0ff, inset 0 0 20px #00f0ff' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' }
+                        },
+                        shake: {
+                            '10%, 90%': { transform: 'translate3d(-2px, 0, 0)' },
+                            '20%, 80%': { transform: 'translate3d(4px, 0, 0)' },
+                            '30%, 50%, 70%': { transform: 'translate3d(-8px, 0, 0)' },
+                            '40%, 60%': { transform: 'translate3d(8px, 0, 0)' }
+                        },
+                        pop: {
+                            '0%': { transform: 'scale(0.8)', opacity: '0' },
+                            '100%': { transform: 'scale(1)', opacity: '1' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #050511;
+            color: #fff;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+        #bg-canvas { position: fixed; top: 0; left: 0; z-index: 0; width: 100vw; height: 100vh; }
+        .z-app { z-index: 10; position: relative; }
+        
+        /* Glass & Cyberpunk Elements */
+        .cyber-glass {
+            background: linear-gradient(135deg, rgba(16, 16, 36, 0.8) 0%, rgba(5, 5, 17, 0.9) 100%);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(0, 240, 255, 0.05);
+        }
+        .cyber-input {
+            background: rgba(0, 240, 255, 0.05);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            color: #00f0ff;
+            transition: all 0.3s ease;
+        }
+        .cyber-input:focus {
+            background: rgba(0, 240, 255, 0.1);
+            border-color: #00f0ff;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.5);
+            outline: none;
+        }
+        .cyber-btn {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(90deg, #ff003c, #b000ff);
+            background-size: 200% auto;
+            border: none;
+            transition: 0.5s;
+            clip-path: polygon(10px 0, 10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+        }
+        .cyber-btn:hover {
+            background-position: right center;
+            box-shadow: 0 0 20px #ff003c;
+            transform: translateY(-2px) scale(1.02);
+        }
+        
+        /* Logo Box Effects */
+        .logo-container {
+            background: radial-gradient(circle, #ffffff 0%, #e2e8f0 100%);
+            border-radius: 20px;
+            box-shadow: 0 0 40px rgba(0,240,255,0.2), inset 0 0 20px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        .logo-img { transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        
+        /* Difficulty Image Manipulations (Removed Blur for better visibility) */
+        .diff-medium { drop-shadow(0 0 15px rgba(0,240,255,0.3)); }
+        .diff-hard { filter: grayscale(100%) contrast(150%); transform: scale(1.1) rotate(-2deg); }
+        .diff-expert { filter: brightness(0.2) drop-shadow(0 0 8px #00f0ff); transform: scale(1.3); }
+
+        /* Timer SVG */
+        .circular-chart { display: block; margin: 0 auto; max-width: 80%; max-height: 250px; }
+        .circle-bg { fill: none; stroke: rgba(255, 255, 255, 0.1); stroke-width: 3.8; }
+        .circle { 
+            fill: none; stroke-width: 3.8; stroke-linecap: round; 
+            transition: stroke-dasharray 0.1s linear, stroke 0.3s ease;
+        }
+
+        /* Float Popups */
+        .score-popup {
+            position: absolute; pointer-events: none;
+            font-family: 'Orbitron', sans-serif; font-weight: 900;
+            animation: floatUp 1s ease-out forwards;
+            text-shadow: 0 0 10px currentColor; z-index: 50;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-50px) scale(1.5); opacity: 0; }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #050511; }
+        ::-webkit-scrollbar-thumb { background: #00f0ff; border-radius: 4px; }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen">
+
+    <!-- Background Particle Engine -->
+    <canvas id="bg-canvas"></canvas>
+
+    <div id="app" class="z-app w-full max-w-6xl p-4 md:p-8 h-screen flex flex-col justify-center mx-auto">
+        
+        <!-- ============================== LOBBY ============================== -->
+        <div id="view-lobby" class="flex flex-col items-center justify-center animate-pop w-full h-full">
+            <h1 class="font-cyber text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyber-cyan to-cyber-purple tracking-widest text-center drop-shadow-[0_0_20px_rgba(0,240,255,0.5)] mb-2 uppercase">
+                Cyber<span class="text-white">Brand</span>
+            </h1>
+            <p class="text-cyber-cyan text-lg md:text-xl font-bold tracking-widest mb-10 text-center">NEXUS PROTOCOL INITIATED</p>
+            
+            <div class="cyber-glass rounded-2xl p-8 w-full max-w-lg border-l-4 border-cyber-pink shadow-[0_0_30px_rgba(255,0,60,0.2)]">
+                <form id="start-form" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-cyber text-slate-400 mb-2 uppercase tracking-wider">Operator Designation</label>
+                        <input type="text" id="player-name" required placeholder="Enter ID..." class="w-full cyber-input rounded-lg px-5 py-4 text-xl font-bold text-center" value="Yahali">
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-cyber text-slate-400 mb-2 uppercase tracking-wider">Protocol</label>
+                            <select id="category-select" class="w-full cyber-input rounded-lg px-4 py-3 text-lg bg-cyber-dark [&>option]:bg-cyber-dark">
+                                <option value="all">Global Network</option>
+                                <option value="tech">Tech & DevOps</option>
+                                <option value="israel">Israeli DB</option>
+                                <option value="cars">Automotive</option>
+                                <option value="food">Consumables</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-cyber text-slate-400 mb-2 uppercase tracking-wider">Threat Level</label>
+                            <select id="diff-select" class="w-full cyber-input rounded-lg px-4 py-3 text-lg bg-cyber-dark [&>option]:bg-cyber-dark">
+                                <option value="easy">Easy (30s)</option>
+                                <option value="medium" selected>Medium (20s)</option>
+                                <option value="hard">Hard (15s)</option>
+                                <option value="expert">Nightmare (12s)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full cyber-btn text-white font-cyber font-black py-5 text-xl tracking-widest uppercase mt-4 flex items-center justify-center gap-3">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" fill-rule="evenodd"></path></svg>
+                        Initialize Link
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Leaderboard Mini -->
+            <div class="mt-8 w-full max-w-lg cyber-glass p-4 rounded-xl border border-cyber-cyan/30 text-center">
+                <h3 class="font-cyber text-cyber-cyan text-sm tracking-widest mb-2 uppercase">Local High Scores</h3>
+                <div id="leaderboard-mini" class="text-sm font-mono text-slate-300 space-y-1">No data found in local sector.</div>
+            </div>
+        </div>
+
+        <!-- ============================== GAME ============================== -->
+        <div id="view-game" class="hidden flex-col w-full h-full relative">
+            
+            <!-- Top HUD -->
+            <div class="cyber-glass rounded-xl p-4 flex flex-wrap items-center justify-between gap-4 border-b-2 border-cyber-cyan animate-pop relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-1 h-full bg-cyber-pink shadow-[0_0_15px_#ff003c]"></div>
+                
+                <div class="flex items-center gap-4">
+                    <button onclick="Game.endGame(true)" class="text-slate-400 hover:text-white transition-colors font-cyber text-sm border border-slate-600 px-3 py-1 rounded">ABORT</button>
+                    <div>
+                        <div class="text-xs text-cyber-cyan font-cyber tracking-widest uppercase">Operator</div>
+                        <div id="hud-name" class="font-bold text-lg"></div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-6">
+                    <div class="text-center">
+                        <div class="text-xs text-cyber-pink font-cyber tracking-widest uppercase">System Integrity</div>
+                        <div id="hud-lives" class="flex gap-1 text-2xl text-cyber-pink drop-shadow-[0_0_8px_#ff003c]">
+                            <span>♥</span><span>♥</span><span>♥</span>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-xs text-cyber-green font-cyber tracking-widest uppercase">Multiplier</div>
+                        <div id="hud-combo" class="font-cyber font-black text-2xl text-cyber-green drop-shadow-[0_0_8px_#00ff66]">x1</div>
+                    </div>
+                    <div class="text-center text-right">
+                        <div class="text-xs text-cyber-cyan font-cyber tracking-widest uppercase">Credits</div>
+                        <div id="hud-score" class="font-cyber font-black text-3xl text-white drop-shadow-[0_0_10px_#fff]">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full bg-slate-800 h-1 mt-4 rounded-full overflow-hidden">
+                <div id="progress-bar" class="bg-cyber-cyan h-full transition-all duration-300 w-0 shadow-[0_0_10px_#00f0ff]"></div>
+            </div>
+
+            <!-- Main Play Area -->
+            <div class="flex-1 flex flex-col md:flex-row gap-6 mt-6 items-center justify-center relative">
+                
+                <!-- Timer Ring -->
+                <div class="absolute md:static top-0 right-0 w-24 h-24 md:w-32 md:h-32 opacity-80 md:opacity-100 flex-shrink-0 z-20">
+                    <svg viewBox="0 0 36 36" class="circular-chart cyber-cyan">
+                        <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path id="timer-path" class="circle stroke-cyber-cyan" stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <!-- FIX: SVG text element target for time updates -->
+                        <text id="timer-text" x="18" y="20.35" class="font-cyber font-black text-[10px] fill-white text-center" text-anchor="middle">30</text>
+                    </svg>
+                </div>
+
+                <!-- Logo Box -->
+                <div id="logo-wrapper" class="logo-container w-full max-w-lg h-64 md:h-80 flex items-center justify-center p-8 animate-float relative z-10 border-4 border-transparent">
+                    <div id="loading-spinner" class="absolute w-12 h-12 border-4 border-cyber-cyan border-t-transparent rounded-full animate-spin"></div>
+                    <img id="logo-img" src="" class="logo-img w-full h-full object-contain hidden pointer-events-none select-none">
+                    <div id="overlay-text" class="absolute inset-0 bg-black/80 flex items-center justify-center font-cyber text-4xl font-black text-cyber-pink hidden opacity-0 transition-opacity text-center px-4"></div>
+                </div>
+            </div>
+
+            <!-- Hint Display -->
+            <div id="hint-display" class="hidden text-center mt-4">
+                <span id="hint-text-content" class="inline-block bg-amber-500/20 text-amber-300 border border-amber-500/50 px-4 py-2 rounded-xl font-bold tracking-wide backdrop-blur-md shadow-[0_0_15px_rgba(245,158,11,0.2)]"></span>
+            </div>
+
+            <!-- Input Area -->
+            <div class="mt-6 w-full max-w-2xl mx-auto space-y-4 relative z-10 pb-4">
+                
+                <!-- Typing Mode -->
+                <form id="type-form" class="flex gap-3">
+                    <input type="text" id="type-input" autocomplete="off" placeholder="IDENTIFY BRAND..." class="flex-1 cyber-input rounded-xl px-6 py-4 text-xl md:text-2xl font-bold text-center tracking-wider">
+                    <button type="submit" class="cyber-btn text-white font-cyber font-black px-8 py-4 rounded-xl text-xl">SUBMIT</button>
+                </form>
+
+                <!-- Multiple Choice Mode -->
+                <div id="mc-container" class="hidden grid grid-cols-2 gap-4">
+                    <!-- Buttons injected via JS -->
+                </div>
+
+                <div class="flex gap-4">
+                    <button type="button" id="btn-hint" onclick="Game.useHint()" class="flex-1 bg-white/5 hover:bg-white/10 text-cyber-cyan border border-cyber-cyan/30 font-cyber font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 backdrop-blur-sm">
+                        <span id="hintBtnText">[ DECRYPT HINT ]</span>
+                    </button>
+                    <button type="button" onclick="Game.skip()" class="flex-1 bg-white/5 hover:bg-white/10 text-slate-400 border border-slate-700 font-cyber font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 backdrop-blur-sm">
+                        <span>[ BYPASS ]</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================== END SCREEN ============================== -->
+        <div id="view-end" class="hidden flex-col items-center justify-center w-full h-full relative z-20">
+            <div class="cyber-glass p-8 md:p-12 rounded-[2rem] w-full max-w-3xl text-center border-t-4 border-cyber-green relative overflow-hidden animate-pop">
+                <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDUiLz4KPC9zdmc+')] opacity-20 pointer-events-none"></div>
+                
+                <h2 class="font-cyber text-4xl md:text-5xl font-black text-white mb-2 tracking-widest uppercase">Simulation Complete</h2>
+                <p class="text-cyber-cyan text-xl mb-8 font-bold">Operator: <span id="end-name"></span></p>
+                
+                <div class="font-cyber text-8xl md:text-9xl font-black text-cyber-green drop-shadow-[0_0_40px_rgba(0,255,102,0.6)] mb-8" id="end-score">0</div>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10 text-left">
+                    <div class="bg-black/40 p-4 rounded-lg border border-white/10">
+                        <div class="text-xs text-slate-400 font-cyber">ACCURACY</div>
+                        <div id="end-acc" class="text-xl font-bold text-white">0%</div>
+                    </div>
+                    <div class="bg-black/40 p-4 rounded-lg border border-white/10">
+                        <div class="text-xs text-slate-400 font-cyber">MAX STREAK</div>
+                        <div id="end-streak" class="text-xl font-bold text-cyber-pink">0</div>
+                    </div>
+                    <div class="bg-black/40 p-4 rounded-lg border border-white/10">
+                        <div class="text-xs text-slate-400 font-cyber">TIME AVG</div>
+                        <div id="end-time" class="text-xl font-bold text-cyber-cyan">0s</div>
+                    </div>
+                    <div class="bg-black/40 p-4 rounded-lg border border-white/10">
+                        <div class="text-xs text-slate-400 font-cyber">RANK</div>
+                        <div id="end-rank" class="text-xl font-bold text-cyber-purple">D</div>
+                    </div>
+                </div>
+                
+                <div class="flex flex-col md:flex-row gap-4">
+                    <button onclick="Game.initLobby()" class="flex-1 bg-white/5 hover:bg-white/10 text-white border border-white/20 font-cyber font-black py-4 rounded-xl text-lg transition-all">
+                        REBOOT SYSTEM
+                    </button>
+                    <button id="btn-sync" onclick="Game.syncToAWS()" class="flex-1 cyber-btn text-white font-cyber font-black py-4 rounded-xl text-lg shadow-[0_0_20px_rgba(0,255,102,0.3)]">
+                        SYNC TO AWS RDS
+                    </button>
+                </div>
+                
+                <div id="sync-result" class="hidden mt-4 p-3 rounded-lg font-mono text-sm border bg-black/60 backdrop-blur-md"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- AUDIO ENGINE & LOGIC -->
+    <script>
+        /* ============================== AUDIO ENGINE ============================== */
+        const AudioSys = {
+            ctx: null,
+            init() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+            play(type) {
+                if(!this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    
+                    const now = this.ctx.currentTime;
+                    if (type === 'hover') {
+                        osc.type = 'sine'; osc.frequency.setValueAtTime(800, now);
+                        gain.gain.setValueAtTime(0.05, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                        osc.start(now); osc.stop(now + 0.1);
+                    } else if (type === 'click') {
+                        osc.type = 'square'; osc.frequency.setValueAtTime(300, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+                        gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                        osc.start(now); osc.stop(now + 0.1);
+                    } else if (type === 'correct') {
+                        osc.type = 'triangle'; osc.frequency.setValueAtTime(440, now); osc.frequency.setValueAtTime(880, now + 0.1);
+                        gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.3);
+                        osc.start(now); osc.stop(now + 0.3);
+                    } else if (type === 'wrong') {
+                        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(50, now + 0.3);
+                        gain.gain.setValueAtTime(0.15, now); gain.gain.linearRampToValueAtTime(0, now + 0.3);
+                        osc.start(now); osc.stop(now + 0.3);
+                    } else if (type === 'tick') {
+                        osc.type = 'square'; osc.frequency.setValueAtTime(1000, now);
+                        gain.gain.setValueAtTime(0.02, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                        osc.start(now); osc.stop(now + 0.05);
+                    } else if (type === 'win') {
+                        osc.type = 'sine';
+                        [440, 554, 659, 880].forEach((freq, i) => {
+                            const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
+                            o.connect(g); g.connect(this.ctx.destination);
+                            o.frequency.value = freq;
+                            g.gain.setValueAtTime(0.1, now + i*0.1); g.gain.linearRampToValueAtTime(0, now + i*0.1 + 1);
+                            o.start(now + i*0.1); o.stop(now + i*0.1 + 1);
+                        });
+                    }
+                } catch(e) { console.log('Audio error ignored'); }
+            }
+        };
+
+        /* ============================== PARTICLES ============================== */
+        const Particles = {
+            canvas: document.getElementById('bg-canvas'),
+            ctx: document.getElementById('bg-canvas').getContext('2d'),
+            arr: [], w: 0, h: 0,
+            init() {
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+                for(let i=0; i<50; i++) this.arr.push(this.create());
+                this.loop();
+            },
+            resize() {
+                this.w = this.canvas.width = window.innerWidth;
+                this.h = this.canvas.height = window.innerHeight;
+            },
+            create() {
+                return {
+                    x: Math.random() * this.w, y: Math.random() * this.h,
+                    r: Math.random() * 2 + 0.5,
+                    vx: (Math.random() - 0.5) * 0.5, vy: (Math.random() - 1) * 1 - 0.2,
+                    c: Math.random() > 0.5 ? '#00f0ff' : '#ff003c',
+                    a: Math.random() * 0.5 + 0.1
+                };
+            },
+            loop() {
+                this.ctx.clearRect(0, 0, this.w, this.h);
+                this.arr.forEach(p => {
+                    p.x += p.vx; p.y += p.vy;
+                    if(p.y < -10) p.y = this.h + 10;
+                    if(p.x < -10) p.x = this.w + 10;
+                    if(p.x > this.w + 10) p.x = -10;
+                    
+                    this.ctx.beginPath();
+                    this.ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    this.ctx.fillStyle = p.c;
+                    this.ctx.globalAlpha = p.a;
+                    this.ctx.fill();
+                    
+                    this.ctx.shadowBlur = 10;
+                    this.ctx.shadowColor = p.c;
+                });
+                this.ctx.globalAlpha = 1; this.ctx.shadowBlur = 0;
+                requestAnimationFrame(() => this.loop());
+            },
+            fireworks() {
+                for(let i=0; i<100; i++) {
+                    this.arr.push({
+                        x: this.w/2, y: this.h,
+                        r: Math.random() * 3 + 1,
+                        vx: (Math.random() - 0.5) * 15, vy: (Math.random() - 1) * 20,
+                        c: ['#00f0ff', '#ff003c', '#00ff66', '#b000ff'][Math.floor(Math.random()*4)],
+                        a: 1
+                    });
+                }
+            }
+        };
+
+        /* ============================== LOGIC ============================== */
+        function levenshtein(s, t) {
+            if (!s.length) return t.length;
+            if (!t.length) return s.length;
+            const arr = [];
+            for (let i = 0; i <= t.length; i++) { arr[i] = [i]; for (let j = 1; j <= s.length; j++) { arr[i][j] = i === 0 ? j : 0; } }
+            for (let i = 1; i <= t.length; i++) {
+                for (let j = 1; j <= s.length; j++) {
+                    const cost = s[j - 1] === t[i - 1] ? 0 : 1;
+                    arr[i][j] = Math.min(arr[i - 1][j] + 1, arr[i][j - 1] + 1, arr[i - 1][j - 1] + cost);
+                }
+            }
+            return arr[t.length][s.length];
+        }
+        function normalize(str) {
+            return str.toLowerCase().replace(/['".,\-!]/g, '').replace(/\s+/g, ' ').trim();
+        }
+
+        const DB = [
+            { id: "docker", answers: ["docker", "דוקר"], domain: "docker.com", category: "tech", hint: "Whale logo. Containerization." },
+            { id: "kubernetes", answers: ["kubernetes", "k8s", "קוברנטיס", "קוברנטיקס"], domain: "kubernetes.io", category: "tech", hint: "Ship's wheel. Container orchestration." },
+            { id: "aws", answers: ["aws", "amazon web services", "אמזון ווסט"], domain: "aws.amazon.com", category: "tech", hint: "Largest cloud provider by Amazon." },
+            { id: "terraform", answers: ["terraform", "hashicorp", "טרהפורם"], domain: "hashicorp.com", category: "tech", hint: "Infrastructure as Code tool by HashiCorp." },
+            { id: "github", answers: ["github", "גיטהאב"], domain: "github.com", category: "tech", hint: "Octocat. Git repository hosting." },
+            { id: "linux", answers: ["linux", "לינוקס"], domain: "linux.org", category: "tech", hint: "Penguin mascot (Tux). OS Kernel." },
+            { id: "apple", answers: ["apple", "אפל"], domain: "apple.com", category: "tech", hint: "Creator of Mac and iPhone." },
+            { id: "microsoft", answers: ["microsoft", "מייקרוסופט", "מיקרוסופט"], domain: "microsoft.com", category: "tech", hint: "Windows OS creator." },
+            { id: "nvidia", answers: ["nvidia", "אנבידיה", "אנווידיה"], domain: "nvidia.com", category: "tech", hint: "Green eye. Leading AI GPU manufacturer." },
+            { id: "react", answers: ["react", "reactjs", "ריאקט"], domain: "react.dev", category: "tech", hint: "Atom logo. UI library by Meta." },
+            { id: "osem", answers: ["osem", "אסם", "אוסם"], domain: "osem.co.il", category: "israel", hint: "Bamba & Bissli manufacturer." },
+            { id: "strauss", answers: ["strauss", "שטראוס"], domain: "strauss-group.com", category: "israel", hint: "Milky and Elite Chocolate." },
+            { id: "tnuva", answers: ["tnuva", "תנובה"], domain: "tnuva.co.il", category: "israel", hint: "Largest Israeli dairy company (Cottage)." },
+            { id: "wix", answers: ["wix", "וויקס"], domain: "wix.com", category: "israel", hint: "Israeli drag-and-drop website builder." },
+            { id: "mcdonalds", answers: ["mcdonalds", "מקדונלדס"], domain: "mcdonalds.com", category: "food", hint: "Golden Arches." },
+            { id: "cocacola", answers: ["coca cola", "cocacola", "coke", "קוקה קולה", "קולה"], domain: "coca-cola.com", category: "food", hint: "Famous red soda brand." },
+            { id: "pepsi", answers: ["pepsi", "פפסי"], domain: "pepsi.com", category: "food", hint: "Red, white, and blue circle. Coke's rival." },
+            { id: "dominos", answers: ["dominos", "dominos pizza", "דומינוס"], domain: "dominos.com", category: "food", hint: "Dice logo. Pizza chain." },
+            { id: "tesla", answers: ["tesla", "טסלה"], domain: "tesla.com", category: "cars", hint: "EV company led by Elon Musk." },
+            { id: "bmw", answers: ["bmw", "במוו"], domain: "bmw.com", category: "cars", hint: "Bavarian blue & white roundel." },
+            { id: "ferrari", answers: ["ferrari", "פרארי"], domain: "ferrari.com", category: "cars", hint: "Prancing horse. Italian sports car." },
+            { id: "toyota", answers: ["toyota", "טויוטה"], domain: "toyota.com", category: "cars", hint: "Japanese giant. Maker of Corolla." },
+            { id: "audi", answers: ["audi", "אאודי", "אודי"], domain: "audi.com", category: "cars", hint: "Four interlocking rings." },
+            { id: "netflix", answers: ["netflix", "נטפליקס"], domain: "netflix.com", category: "tech", hint: "Red N. Streaming giant." },
+            { id: "spotify", answers: ["spotify", "ספוטיפיי"], domain: "spotify.com", category: "tech", hint: "Green circles with sound waves." },
+            { id: "nike", answers: ["nike", "נייק", "נייקי"], domain: "food", hint: "The Swoosh. 'Just Do It'." },
+            { id: "playstation", answers: ["playstation", "ps", "פלייסטיישן", "סוני"], domain: "playstation.com", category: "tech", hint: "Sony's gaming console." },
+            { id: "xbox", answers: ["xbox", "אקסבוקס"], domain: "xbox.com", category: "tech", hint: "Microsoft's gaming console." }
+        ];
+
+        /* ============================== GAME ENGINE ============================== */
+        const Game = {
+            state: {
+                player: '', category: '', diff: '',
+                score: 0, lives: 3, combo: 0, maxCombo: 0,
+                stage: 0, totalStages: 10,
+                queue: [], current: null,
+                timer: 0, maxTime: 30, timerInt: null,
+                startTime: 0, totalTime: 0, correctCount: 0,
+                mode: 'type' 
+            },
+            settings: {
+                easy: { time: 30, hintCost: 0, css: '', pts: 10 },
+                medium: { time: 20, hintCost: 5, css: 'diff-medium', pts: 15 },
+                hard: { time: 15, hintCost: 999, css: 'diff-hard', pts: 25 },
+                expert: { time: 12, hintCost: 999, css: 'diff-expert', pts: 40 }
+            },
+
+            switchView(viewId) {
+                ['lobby', 'game', 'end'].forEach(id => {
+                    const el = document.getElementById(`view-${id}`);
+                    if (!el) return;
+                    if (id === viewId) { el.classList.remove('hidden'); el.classList.add('flex'); } 
+                    else { el.classList.add('hidden'); el.classList.remove('flex'); }
+                });
+            },
+
+            initLobby() {
+                Particles.init();
+                this.switchView('lobby');
+                this.renderLeaderboard();
+                setTimeout(() => document.getElementById('player-name').focus(), 100);
+            },
+
+            start(e) {
+                e.preventDefault();
+                AudioSys.init(); AudioSys.play('click');
+                
+                this.state.player = document.getElementById('player-name').value || 'Operator';
+                this.state.category = document.getElementById('category-select').value;
+                this.state.diff = document.getElementById('diff-select').value;
+                
+                let pool = DB;
+                if (this.state.category !== 'all') pool = DB.filter(i => i.category === this.state.category);
+                if (pool.length < 5) pool = DB; 
+                
+                this.state.queue = [...pool].sort(() => 0.5 - Math.random()).slice(0, 10);
+                this.state.totalStages = this.state.queue.length;
+                
+                this.state.score = 0; this.state.lives = 3; this.state.combo = 0; 
+                this.state.maxCombo = 0; this.state.stage = 0; 
+                this.state.totalTime = 0; this.state.correctCount = 0;
+
+                document.getElementById('hud-name').innerText = this.state.player;
+                
+                const btnHint = document.getElementById('btn-hint');
+                const hintBtnText = document.getElementById('hintBtnText');
+                
+                if(this.state.diff === 'hard' || this.state.diff === 'expert') {
+                    btnHint.classList.add('hidden');
+                } else {
+                    btnHint.classList.remove('hidden');
+                    hintBtnText.innerText = this.state.diff === 'easy' ? '[ DECRYPT HINT ]' : '[ DECRYPT HINT (-5 CR) ]';
+                }
+                
+                this.switchView('game');
+                this.loadStage();
+            },
+
+            loadStage() {
+                if (this.state.lives <= 0 || this.state.stage >= this.state.totalStages) {
+                    return this.endGame();
+                }
+
+                this.state.current = this.state.queue[this.state.stage];
+                this.state.stage++;
+                this.updateHUD();
+
+                const typeInput = document.getElementById('type-input');
+                const typeForm = document.getElementById('type-form');
+                const mcContainer = document.getElementById('mc-container');
+                const hintDisplay = document.getElementById('hint-display');
+                const logo = document.getElementById('logo-img');
+                const spinner = document.getElementById('loading-spinner');
+                const logoWrap = document.getElementById('logo-wrapper');
+                
+                typeInput.value = '';
+                typeInput.classList.remove('border-cyber-pink', 'border-cyber-green');
+                hintDisplay.classList.add('hidden');
+                document.getElementById('btn-hint').disabled = false;
+                
+                logo.classList.add('hidden');
+                logo.className = 'logo-img w-full h-full object-contain hidden pointer-events-none select-none';
+                spinner.classList.remove('hidden');
+                
+                const set = this.settings[this.state.diff];
+                if (set.css) logo.classList.add(set.css);
+
+                this.state.mode = Math.random() > 0.8 ? 'mc' : 'type';
+                if (this.state.mode === 'type') {
+                    typeForm.classList.remove('hidden'); mcContainer.classList.add('hidden');
+                    setTimeout(() => typeInput.focus(), 100);
+                } else {
+                    typeForm.classList.add('hidden'); mcContainer.classList.remove('hidden');
+                    this.buildMultipleChoice();
+                }
+
+                // IMAGE LOADING LOGIC - 100% RELIABLE FALLBACK CHAIN
+                const domain = this.state.current.domain;
+                const imageSources = [
+                    `https://logo.clearbit.com/${domain}?size=400`, 
+                    `https://www.google.com/s2/favicons?domain=${domain}&sz=256` // Never fails
+                ];
+                
+                let attemptIndex = 0;
+
+                const tryLoadNextImage = () => {
+                    if (attemptIndex >= imageSources.length) {
+                        spinner.classList.add('hidden');
+                        logo.alt = "LOGO UNAVAILABLE";
+                        logo.classList.remove('hidden');
+                        this.startTimer();
+                        return;
+                    }
+
+                    const img = new Image();
+                    img.onload = () => {
+                        logo.src = img.src;
+                        spinner.classList.add('hidden');
+                        logo.classList.remove('hidden');
+                        logoWrap.classList.add('animate-pop');
+                        setTimeout(() => logoWrap.classList.remove('animate-pop'), 400);
+                        this.startTimer();
+                    };
+                    img.onerror = () => {
+                        attemptIndex++;
+                        tryLoadNextImage();
+                    };
+                    img.src = imageSources[attemptIndex];
+                };
+
+                tryLoadNextImage();
+            },
+
+            buildMultipleChoice() {
+                const mcContainer = document.getElementById('mc-container');
+                const answers = [this.state.current.answers[0]]; 
+                const pool = DB.filter(i => i.id !== this.state.current.id).sort(() => 0.5 - Math.random());
+                for(let i=0; i<3; i++) answers.push(pool[i].answers[0]);
+                answers.sort(() => 0.5 - Math.random());
+                
+                mcContainer.innerHTML = '';
+                answers.forEach(ans => {
+                    const btn = document.createElement('button');
+                    btn.className = 'cyber-btn py-4 rounded-xl text-lg font-cyber font-bold tracking-widest text-white uppercase text-center';
+                    btn.innerText = ans;
+                    btn.onclick = () => this.processAnswer(ans);
+                    mcContainer.appendChild(btn);
+                });
+            },
+
+            startTimer() {
+                clearInterval(this.state.timerInt);
+                this.state.maxTime = this.settings[this.state.diff].time;
+                this.state.timer = this.state.maxTime;
+                this.state.startTime = Date.now();
+                const path = document.getElementById('timer-path');
+                const text = document.getElementById('timer-text');
+                
+                this.state.timerInt = setInterval(() => {
+                    this.state.timer -= 0.1;
+                    if (this.state.timer <= 0) {
+                        this.state.timer = 0;
+                        this.timeOut();
+                    }
+                    const perc = (this.state.timer / this.state.maxTime) * 100;
+                    path.setAttribute('stroke-dasharray', `${perc}, 100`);
+                    
+                    // FIX: Uses textContent to properly update SVG text nodes in all browsers
+                    text.textContent = Math.ceil(this.state.timer).toString();
+                    
+                    if (this.state.timer < 5) {
+                        path.classList.replace('stroke-cyber-cyan', 'stroke-cyber-pink');
+                        text.classList.add('text-cyber-pink');
+                        if (Number.isInteger(parseFloat(this.state.timer.toFixed(1)))) AudioSys.play('tick');
+                    } else {
+                        path.classList.replace('stroke-cyber-pink', 'stroke-cyber-cyan');
+                        text.classList.remove('text-cyber-pink');
+                    }
+                }, 100);
+            },
+            
+            stopTimer() {
+                clearInterval(this.state.timerInt);
+                this.state.totalTime += (Date.now() - this.state.startTime) / 1000;
+            },
+
+            timeOut() {
+                this.stopTimer();
+                this.wrongSequence('TIMEOUT');
+            },
+
+            submitType(e) {
+                e.preventDefault();
+                this.processAnswer(document.getElementById('type-input').value);
+            },
+
+            processAnswer(rawVal) {
+                this.stopTimer();
+                const val = normalize(rawVal);
+                if (!val) return;
+
+                let isCorrect = false;
+                for (let ans of this.state.current.answers) {
+                    const normAns = normalize(ans);
+                    if (val === normAns || val.includes(normAns)) { isCorrect = true; break; }
+                    if (normAns.length > 3) {
+                        const dist = levenshtein(val, normAns);
+                        if (dist <= (normAns.length > 6 ? 2 : 1)) { isCorrect = true; break; }
+                    }
+                }
+
+                if (isCorrect) this.correctSequence();
+                else this.wrongSequence('ACCESS DENIED');
+            },
+
+            correctSequence() {
+                AudioSys.play('correct');
+                this.state.correctCount++;
+                this.state.combo++;
+                if(this.state.combo > this.state.maxCombo) this.state.maxCombo = this.state.combo;
+                
+                const base = this.settings[this.state.diff].pts;
+                const speedBonus = Math.floor(this.state.timer * 2);
+                const multi = Math.min(5, 1 + (this.state.combo * 0.2)); 
+                const earned = Math.floor((base + speedBonus) * multi);
+                
+                this.state.score += earned;
+                this.showPopup(`+${earned} CR`, 'text-cyber-green');
+                
+                document.getElementById('type-input').classList.add('border-cyber-green', 'shadow-[0_0_15px_#00ff66]');
+                this.showOverlay('ACCESS GRANTED', 'text-cyber-green');
+                
+                this.updateHUD();
+                setTimeout(() => this.loadStage(), 1000);
+            },
+
+            wrongSequence(msg) {
+                AudioSys.play('wrong');
+                this.state.lives--;
+                this.state.combo = 0;
+                
+                document.getElementById('type-input').classList.add('border-cyber-pink', 'shadow-[0_0_15px_#ff003c]');
+                document.getElementById('app').classList.add('animate-shake');
+                setTimeout(() => document.getElementById('app').classList.remove('animate-shake'), 500);
+                
+                this.showOverlay(msg, 'text-cyber-pink');
+                
+                this.updateHUD();
+                setTimeout(() => this.loadStage(), 1200);
+            },
+
+            skip() {
+                AudioSys.play('click');
+                this.stopTimer();
+                this.state.combo = 0;
+                this.showPopup('BYPASSED', 'text-slate-400');
+                this.loadStage();
+            },
+
+            useHint() {
+                if (this.state.diff === 'hard' || this.state.diff === 'expert' || this.state.score < 5) return;
+                AudioSys.play('hover');
+                if (this.state.diff === 'medium') {
+                    this.state.score -= 5;
+                    this.updateHUD();
+                    this.showPopup('-5 CR', 'text-cyber-pink');
+                }
+                const disp = document.getElementById('hint-display');
+                document.getElementById('hint-text-content').innerText = `DATA FRAGMENT: ${this.state.current.hint}`;
+                disp.classList.remove('hidden');
+                document.getElementById('btn-hint').disabled = true;
+            },
+
+            updateHUD() {
+                const sEl = document.getElementById('stageNum');
+                const scrEl = document.getElementById('hud-score');
+                const cEl = document.getElementById('hud-combo');
+                const pb = document.getElementById('progress-bar');
+                const livesEl = document.getElementById('hud-lives');
+
+                if(sEl) sEl.innerText = this.state.stage;
+                if(scrEl) scrEl.innerText = this.state.score;
+                if(cEl) {
+                    cEl.innerText = `x${this.state.combo}`;
+                    cEl.className = `font-cyber font-black text-2xl drop-shadow-[0_0_8px_currentColor] ${this.state.combo > 2 ? 'text-amber-400' : 'text-cyber-green'}`;
+                }
+                if(pb) pb.style.width = `${(this.state.stage / this.state.totalStages) * 100}%`;
+                
+                if(livesEl) {
+                    let hStr = '';
+                    for(let i=0; i<this.state.lives; i++) hStr += '<span>♥</span>';
+                    livesEl.innerHTML = hStr;
+                }
+            },
+
+            showPopup(text, colorClass) {
+                const el = document.createElement('div');
+                el.className = `score-popup ${colorClass}`;
+                el.innerText = text;
+                el.style.left = `calc(50% + ${(Math.random()-0.5)*100}px)`;
+                el.style.top = `calc(50% + ${(Math.random()-0.5)*100}px)`;
+                document.getElementById('view-game').appendChild(el);
+                setTimeout(() => el.remove(), 1000);
+            },
+
+            showOverlay(text, colorClass) {
+                const ov = document.getElementById('overlay-text');
+                ov.innerText = text;
+                ov.className = `absolute inset-0 bg-black/80 flex items-center justify-center font-cyber text-2xl md:text-4xl text-center px-4 font-black transition-opacity opacity-100 z-30 ${colorClass}`;
+                setTimeout(() => ov.classList.replace('opacity-100', 'opacity-0'), 800);
+            },
+
+            endGame(aborted = false) {
+                this.stopTimer();
+                if(this.state.lives > 0 && !aborted) AudioSys.play('win');
+                if(!aborted) Particles.fireworks();
+                
+                this.switchView('end');
+                
+                const acc = Math.round((this.state.correctCount / this.state.totalStages) * 100) || 0;
+                const avgT = this.state.stage > 0 ? (this.state.totalTime / this.state.stage).toFixed(1) : 0;
+                let rank = 'D';
+                if (acc > 90) rank = 'S'; else if (acc > 75) rank = 'A'; else if (acc > 50) rank = 'B'; else if (acc > 30) rank = 'C';
+                
+                document.getElementById('end-name').innerText = this.state.player;
+                document.getElementById('end-score').innerText = this.state.score;
+                document.getElementById('end-acc').innerText = `${acc}%`;
+                document.getElementById('end-streak').innerText = this.state.maxCombo;
+                document.getElementById('end-time').innerText = `${avgT}s`;
+                document.getElementById('end-rank').innerText = rank;
+
+                const rc = { 'S':'#b000ff', 'A':'#00ff66', 'B':'#00f0ff', 'C':'#f59e0b', 'D':'#ff003c' }[rank];
+                document.getElementById('end-rank').style.color = rc;
+                
+                if(!aborted && this.state.score > 0) {
+                    const lb = JSON.parse(localStorage.getItem('cyberLb') || '[]');
+                    lb.push({ name: this.state.player, score: this.state.score, diff: this.state.diff });
+                    lb.sort((a,b) => b.score - a.score);
+                    localStorage.setItem('cyberLb', JSON.stringify(lb.slice(0,5)));
+                }
+
+                document.getElementById('sync-result').classList.add('hidden');
+                document.getElementById('btn-sync').disabled = false;
+                document.getElementById('btn-sync').innerText = 'SYNC TO AWS RDS';
+            },
+
+            renderLeaderboard() {
+                const lb = JSON.parse(localStorage.getItem('cyberLb') || '[]');
+                const el = document.getElementById('leaderboard-mini');
+                if(!lb.length) { el.innerText = ".No data found in local sector."; return; }
+                el.innerHTML = lb.map((i, idx) => `<div class="flex justify-between border-b border-white/5 py-1"><span>${idx+1}. ${i.name} [${i.diff.charAt(0).toUpperCase()}]</span><span class="text-cyber-green">${i.score}</span></div>`).join('');
+            },
+
+            async syncToAWS() {
+                const btn = document.getElementById('btn-sync');
+                const resultBox = document.getElementById('sync-result');
+                
+                btn.disabled = true;
+                btn.innerText = "ESTABLISHING UPLINK...";
+                resultBox.classList.add('hidden');
+
+                const payload = {
+                    name: this.state.player || 'GuestOperator',
+                    os: `Score: ${this.state.score} | Diff: ${this.state.diff} | Acc: ${Math.round((this.state.correctCount / this.state.totalStages) * 100)}%`,
+                    cpu: 4, 
+                    ram: 8, 
+                    provision: true
+                };
+
+                try {
+                    const response = await fetch('/api/provision', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await response.json();
+                    
+                    resultBox.classList.remove('hidden');
+                    if (response.ok) {
+                        resultBox.className = "mt-4 p-3 rounded-lg font-mono text-sm border border-cyber-green/50 text-cyber-green text-left bg-black/60";
+                        resultBox.innerHTML = `<strong>UPLINK SUCCESSFUL</strong><br>Data transmitted to RDS Cloud.<br>Instance ID: ${data.instance_id || 'i-cyber-brand-auth'}`;
+                    } else {
+                        throw new Error(data.message || 'Database sync failed');
+                    }
+                } catch (err) {
+                    resultBox.classList.remove('hidden');
+                    resultBox.className = "mt-4 p-3 rounded-lg font-mono text-sm border border-cyber-pink/50 text-cyber-pink text-left bg-black/60";
+                    resultBox.innerHTML = `<strong>UPLINK FAILED:</strong> ${err.message}`;
+                } finally {
+                    btn.innerText = "SYNC COMPLETE";
+                }
+            }
+        };
+
+        // Event Bindings
+        document.getElementById('start-form').addEventListener('submit', (e) => Game.start(e));
+        document.getElementById('type-form').addEventListener('submit', (e) => Game.submitType(e));
+        
+        document.addEventListener('mouseover', (e) => {
+            if(e.target.tagName === 'BUTTON' || e.target.closest('button')) AudioSys.play('hover');
+        });
+
+        window.addEventListener('load', () => Game.initLobby());
+
+    </script>
+</body>
+</html>

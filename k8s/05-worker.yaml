@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: worker-sa
+  namespace: devops-app
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: worker
+  namespace: devops-app
+  labels:
+    app: worker
+spec:
+  schedule: "0 * * * *" # Runs at minute 0 past every hour
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: worker
+        spec:
+          serviceAccountName: worker-sa
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+          restartPolicy: OnFailure
+          containers:
+            - name: worker
+              image: yahaligottlieb/devops-worker:v1
+              imagePullPolicy: Always
+              # Removed the 'while true' loop and useless cat probes.
+              # The container will now run the default Python script and exit cleanly.
+              envFrom:
+                - configMapRef:
+                    name: devops-config
+                - secretRef:
+                    name: devops-secrets
+              resources:
+                requests:
+                  memory: "64Mi"
+                  cpu: "50m"
+                limits:
+                  memory: "128Mi"
+                  cpu: "100m"
+              securityContext:
+                allowPrivilegeEscalation: false

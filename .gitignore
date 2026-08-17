@@ -1,0 +1,78 @@
+# --- Security & Secrets (CRITICAL) ---
+*.pem
+*.rsa
+*.pub
+*id_rsa*
+*.key
+.vault_pass.txt
+secrets.txt
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+.env
+bin/
+include/
+lib/
+share/
+
+# --- Terraform ---
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+*.tfvars.json
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# --- Ansible ---
+*.retry
+
+# --- Logs & Application Data ---
+*.log
+logs/
+configs/instances.json
+dist/
+build/
+*.egg-info/
+/tmp/daily_report_*.csv
+
+# --- VS Code ---
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# --- OS specific (Linux/macOS/Windows) ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# --- Security & Secrets (CRITICAL) ---
+*.pem
+*.rsa
+*.pub
+*id_rsa*
+*.key
+.vault_pass.txt
+secrets.txt
+03-secret.yaml
+k8s/03-secret.yaml
