@@ -7,17 +7,20 @@ pipeline {
             spec:
               containers:
               - name: docker
-                image: docker:24.0.5-dind
-                securityContext:
-                  privileged: true
+                image: docker:24.0.5
+                command: ['cat']
                 tty: true
-                env:
-                - name: DOCKER_TLS_CERTDIR
-                  value: ""
+                volumeMounts:
+                - name: docker-socket
+                  mountPath: /var/run/docker.sock
               - name: python
                 image: python:3.9-slim
                 command: ['cat']
                 tty: true
+              volumes:
+              - name: docker-socket
+                hostPath:
+                  path: /var/run/docker.sock
             '''
         }
     }
@@ -27,8 +30,6 @@ pipeline {
         BACKEND_IMAGE   = 'yahaligottlieb/devops-backend'
         FRONTEND_IMAGE  = 'yahaligottlieb/devops-frontend'
         IMAGE_TAG       = "${BUILD_NUMBER}-${GIT_COMMIT.take(7)}"
-        // הגדרה שמאפשרת ללקוח הדוקר לדבר עם שירות ה-DinD המקומי באותו פוד
-        DOCKER_HOST     = 'tcp://localhost:2375'
     }
     
     stages {
@@ -52,7 +53,6 @@ pipeline {
         
         stage('Unit Tests') {
             steps {
-                // הרצת הטסטים בתוך הקונטיינר של הפייתון שיצרנו בתבנית הפוד
                 container('python') {
                     echo 'Running unit tests...'
                     sh 'python3 -m unittest discover -s ansible/app/backend -p "*test*.py" || echo "Tests passed or no tests found."'
@@ -62,12 +62,8 @@ pipeline {
         
         stage('Build Docker Images') {
             steps {
-                // הרצת פקודות הבנייה בתוך קונטיינר הדוקר הייעודי
                 container('docker') {
                     echo "Building Docker images with Tag: ${IMAGE_TAG}..."
-                    // מוודאים ששירות הדוקר הספיק לעלות בתוך הקונטיינר לפני שרצים
-                    sh 'until docker info >/dev/null 2>&1; do sleep 1; done'
-                    
                     sh """
                         docker build -t ${BACKEND_IMAGE}:${IMAGE_TAG} -f ansible/app/backend/Dockerfile ansible/app/backend
                         docker build -t ${FRONTEND_IMAGE}:${IMAGE_TAG} -f ansible/app/frontend/Dockerfile ansible/app/frontend
