@@ -1,0 +1,76 @@
+pipeline {
+    agent any
+    
+    parameters {
+        string(name: 'IMAGE_TAG', defaultValue: 'v1', description: 'The immutable image tag to deploy')
+        string(name: 'NAMESPACE', defaultValue: 'devops-app', description: 'Target Kubernetes Namespace')
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                echo 'Pulling Kubernetes manifests...'
+                checkout scm
+            }
+        }
+        
+        stage('Input & Manifest Validation') {
+            steps {
+                echo "Validating Image Tag: ${params.IMAGE_TAG} and target namespace: ${params.NAMESPACE}..."
+                sh """
+                    if [ "${params.IMAGE_TAG}" = "latest" ]; then
+                        echo "Error: 'latest' tag is forbidden for deployments."
+                        exit 1
+                    fi
+                """
+            }
+        }
+        
+        stage('Deploy to Kubernetes') {
+            steps {
+                echo "Deploying version ${params.IMAGE_TAG} to namespace ${params.NAMESPACE}..."
+                sh '''
+                    if [ ! -f ./kubectl ]; then
+                        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+                        chmod +x kubectl
+                    fi
+                    
+                    ./kubectl apply -f k8s/
+                    
+                    # Update deployments to use the immutable image tag
+                    ./kubectl set image deployment/backend backend=yahaligottlieb/devops-backend:${IMAGE_TAG} -n ${NAMESPACE} --record || true
+                    ./kubectl set image deployment/frontend frontend=yahaligottlieb/devops-frontend:${IMAGE_TAG} -n ${NAMESPACE} --record || true
+                '''
+            }
+        }
+        
+        stage('Verify Rollout') {
+            steps {
+                echo 'Waiting for Rollout to finish successfully...'
+                sh '''
+                    ./kubectl rollout status deployment/backend -n ${NAMESPACE} --timeout=180s
+                    ./kubectl rollout status deployment/frontend -n ${NAMESPACE} --timeout=180s
+                '''
+            }
+        }
+        
+        stage('Smoke Test') {
+            steps {
+                echo 'Running smoke test against deployed services...'
+                sh '''
+                    ./kubectl get pods -n ${NAMESPACE}
+                    ./kubectl get svc -n ${NAMESPACE}
+                '''
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo "CD Deployment of version ${params.IMAGE_TAG} succeeded!"
+        }
+        failure {
+            echo "Deployment failed! Check logs or run rollback via: kubectl rollout undo deployment/backend -n ${params.NAMESPACE}"
+        }
+    }
+}

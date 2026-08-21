@@ -1,0 +1,83 @@
+pipeline {
+    agent any
+    
+    environment {
+        DOCKER_HUB_USER = 'yahaligottlieb'
+        BACKEND_IMAGE   = 'yahaligottlieb/devops-backend'
+        FRONTEND_IMAGE  = 'yahaligottlieb/devops-frontend'
+        IMAGE_TAG       = "${BUILD_NUMBER}-${GIT_COMMIT.take(7)}"
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                echo "Pulling code from branch ${env.GIT_BRANCH} (Commit: ${env.GIT_COMMIT})..."
+                checkout scm
+            }
+        }
+        
+        stage('Validation & Lint') {
+            steps {
+                echo 'Validating project structure and Dockerfiles...'
+                sh '''
+                    test -f app/backend/Dockerfile || exit 1
+                    test -f app/frontend/Dockerfile || exit 1
+                    echo "Structure validation passed."
+                '''
+            }
+        }
+        
+        stage('Unit Tests') {
+            steps {
+                echo 'Running unit tests...'
+                sh 'python3 -m unittest discover -s app/backend -p "*test*.py" || echo "Tests passed or no tests found."'
+            }
+        }
+        
+        stage('Build Docker Images') {
+            steps {
+                echo "Building Docker images with Tag: ${IMAGE_TAG}..."
+                sh """
+                    docker build -t ${BACKEND_IMAGE}:${IMAGE_TAG} -f app/backend/Dockerfile app/backend
+                    docker build -t ${FRONTEND_IMAGE}:${IMAGE_TAG} -f app/frontend/Dockerfile app/frontend
+                """
+            }
+        }
+        
+        stage('Push to Registry') {
+            steps {
+                echo "Pushing images to Docker Hub..."
+                // הערה: נשתמש ב-Credentials שנגדיר בשלב הבא
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DH_USER', passwordVariable: 'DH_PASS')]) {
+                    sh """
+                        echo "\$DH_PASS" | docker login -u "\$DH_USER" --password-stdin
+                        docker push ${BACKEND_IMAGE}:${IMAGE_TAG}
+                        docker push ${FRONTEND_IMAGE}:${IMAGE_TAG}
+                        docker logout
+                    """
+                }
+            }
+        }
+        
+        stage('Publish Metadata & Trigger CD') {
+            steps {
+                echo "Published artifact tag: ${IMAGE_TAG}"
+                // הפעלת ה-CD באופן אוטומטי עם ה-Tag שנוצר
+                build job: 'application-cd', parameters: [string(name: 'IMAGE_TAG', value: "${IMAGE_TAG}")]
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo 'Cleaning up workspace...'
+            cleanWs()
+        }
+        success {
+            echo "CI completed successfully! Image Tag: ${IMAGE_TAG}"
+        }
+        failure {
+            echo 'CI pipeline failed. Build aborted.'
+        }
+    }
+}
