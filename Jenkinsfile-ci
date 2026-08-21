@@ -20,8 +20,8 @@ pipeline {
             steps {
                 echo 'Validating project structure and Dockerfiles...'
                 sh '''
-                    test -f app/backend/Dockerfile || exit 1
-                    test -f app/frontend/Dockerfile || exit 1
+                    test -f ansible/app/backend/Dockerfile || exit 1
+                    test -f ansible/app/frontend/Dockerfile || exit 1
                     echo "Structure validation passed."
                 '''
             }
@@ -30,7 +30,7 @@ pipeline {
         stage('Unit Tests') {
             steps {
                 echo 'Running unit tests...'
-                sh 'python3 -m unittest discover -s app/backend -p "*test*.py" || echo "Tests passed or no tests found."'
+                sh 'python3 -m unittest discover -s ansible/app/backend -p "*test*.py" || echo "Tests passed or no tests found."'
             }
         }
         
@@ -38,8 +38,8 @@ pipeline {
             steps {
                 echo "Building Docker images with Tag: ${IMAGE_TAG}..."
                 sh """
-                    docker build -t ${BACKEND_IMAGE}:${IMAGE_TAG} -f app/backend/Dockerfile app/backend
-                    docker build -t ${FRONTEND_IMAGE}:${IMAGE_TAG} -f app/frontend/Dockerfile app/frontend
+                    docker build -t ${BACKEND_IMAGE}:${IMAGE_TAG} -f ansible/app/backend/Dockerfile ansible/app/backend
+                    docker build -t ${FRONTEND_IMAGE}:${IMAGE_TAG} -f ansible/app/frontend/Dockerfile ansible/app/frontend
                 """
             }
         }
@@ -47,7 +47,6 @@ pipeline {
         stage('Push to Registry') {
             steps {
                 echo "Pushing images to Docker Hub..."
-                // הערה: נשתמש ב-Credentials שנגדיר בשלב הבא
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DH_USER', passwordVariable: 'DH_PASS')]) {
                     sh """
                         echo "\$DH_PASS" | docker login -u "\$DH_USER" --password-stdin
@@ -62,7 +61,6 @@ pipeline {
         stage('Publish Metadata & Trigger CD') {
             steps {
                 echo "Published artifact tag: ${IMAGE_TAG}"
-                // הפעלת ה-CD באופן אוטומטי עם ה-Tag שנוצר
                 build job: 'application-cd', parameters: [string(name: 'IMAGE_TAG', value: "${IMAGE_TAG}")]
             }
         }
@@ -71,7 +69,7 @@ pipeline {
     post {
         always {
             echo 'Cleaning up workspace...'
-            cleanWs()
+            deleteDir() 
         }
         success {
             echo "CI completed successfully! Image Tag: ${IMAGE_TAG}"
