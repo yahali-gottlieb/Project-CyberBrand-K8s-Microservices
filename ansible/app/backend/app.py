@@ -13,6 +13,9 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(mess
     datefmt='%Y-%m-%d %H:%M:%S', filename='logs/api.log', filemode='a')
 
 app = Flask(__name__)
+@app.route('/')
+def health_check():
+    return {"status": "healthy"}, 200
 CORS(app) 
 
 # Database connection settings from environment variables
