@@ -1,11 +1,34 @@
 pipeline {
-    agent any
+    agent {
+        kubernetes {
+            yaml '''
+            apiVersion: v1
+            kind: Pod
+            spec:
+              containers:
+              - name: docker
+                image: docker:24.0.5-dind
+                securityContext:
+                  privileged: true
+                tty: true
+                env:
+                - name: DOCKER_TLS_CERTDIR
+                  value: ""
+              - name: python
+                image: python:3.9-slim
+                command: ['cat']
+                tty: true
+            '''
+        }
+    }
     
     environment {
         DOCKER_HUB_USER = 'yahaligottlieb'
         BACKEND_IMAGE   = 'yahaligottlieb/devops-backend'
         FRONTEND_IMAGE  = 'yahaligottlieb/devops-frontend'
         IMAGE_TAG       = "${BUILD_NUMBER}-${GIT_COMMIT.take(7)}"
+        // הגדרה שמאפשרת ללקוח הדוקר לדבר עם שירות ה-DinD המקומי באותו פוד
+        DOCKER_HOST     = 'tcp://localhost:2375'
     }
     
     stages {
@@ -29,31 +52,42 @@ pipeline {
         
         stage('Unit Tests') {
             steps {
-                echo 'Running unit tests...'
-                sh 'python3 -m unittest discover -s ansible/app/backend -p "*test*.py" || echo "Tests passed or no tests found."'
+                // הרצת הטסטים בתוך הקונטיינר של הפייתון שיצרנו בתבנית הפוד
+                container('python') {
+                    echo 'Running unit tests...'
+                    sh 'python3 -m unittest discover -s ansible/app/backend -p "*test*.py" || echo "Tests passed or no tests found."'
+                }
             }
         }
         
         stage('Build Docker Images') {
             steps {
-                echo "Building Docker images with Tag: ${IMAGE_TAG}..."
-                sh """
-                    docker build -t ${BACKEND_IMAGE}:${IMAGE_TAG} -f ansible/app/backend/Dockerfile ansible/app/backend
-                    docker build -t ${FRONTEND_IMAGE}:${IMAGE_TAG} -f ansible/app/frontend/Dockerfile ansible/app/frontend
-                """
+                // הרצת פקודות הבנייה בתוך קונטיינר הדוקר הייעודי
+                container('docker') {
+                    echo "Building Docker images with Tag: ${IMAGE_TAG}..."
+                    // מוודאים ששירות הדוקר הספיק לעלות בתוך הקונטיינר לפני שרצים
+                    sh 'until docker info >/dev/null 2>&1; do sleep 1; done'
+                    
+                    sh """
+                        docker build -t ${BACKEND_IMAGE}:${IMAGE_TAG} -f ansible/app/backend/Dockerfile ansible/app/backend
+                        docker build -t ${FRONTEND_IMAGE}:${IMAGE_TAG} -f ansible/app/frontend/Dockerfile ansible/app/frontend
+                    """
+                }
             }
         }
         
         stage('Push to Registry') {
             steps {
-                echo "Pushing images to Docker Hub..."
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DH_USER', passwordVariable: 'DH_PASS')]) {
-                    sh """
-                        echo "\$DH_PASS" | docker login -u "\$DH_USER" --password-stdin
-                        docker push ${BACKEND_IMAGE}:${IMAGE_TAG}
-                        docker push ${FRONTEND_IMAGE}:${IMAGE_TAG}
-                        docker logout
-                    """
+                container('docker') {
+                    echo "Pushing images to Docker Hub..."
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DH_USER', passwordVariable: 'DH_PASS')]) {
+                        sh """
+                            echo "\$DH_PASS" | docker login -u "\$DH_USER" --password-stdin
+                            docker push ${BACKEND_IMAGE}:${IMAGE_TAG}
+                            docker push ${FRONTEND_IMAGE}:${IMAGE_TAG}
+                            docker logout
+                        """
+                    }
                 }
             }
         }
