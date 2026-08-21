@@ -40,6 +40,9 @@ pipeline {
                     # Update deployments to use the immutable image tag
                     ./kubectl set image deployment/backend backend=yahaligottlieb/devops-backend:${IMAGE_TAG} -n ${NAMESPACE} --record || true
                     ./kubectl set image deployment/frontend frontend=yahaligottlieb/devops-frontend:${IMAGE_TAG} -n ${NAMESPACE} --record || true
+                    
+                    # Give Kubernetes a brief moment to register the new rollout
+                    sleep 5
                 '''
             }
         }
@@ -48,8 +51,8 @@ pipeline {
             steps {
                 echo 'Waiting for Rollout to finish successfully...'
                 sh '''
-                    ./kubectl rollout status deployment/backend -n ${NAMESPACE} --timeout=180s
-                    ./kubectl rollout status deployment/frontend -n ${NAMESPACE} --timeout=180s
+                    ./kubectl rollout status deployment/backend -n ${NAMESPACE} --timeout=300s
+                    ./kubectl rollout status deployment/frontend -n ${NAMESPACE} --timeout=300s
                 '''
             }
         }
