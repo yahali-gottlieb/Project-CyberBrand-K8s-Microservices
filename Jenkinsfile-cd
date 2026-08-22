@@ -35,13 +35,13 @@ pipeline {
                         chmod +x kubectl
                     fi
                     
+                    # Apply configurations, workloads, and services (excluding example files)
                     ./kubectl apply -f k8s/
                     
                     # Update deployments to use the immutable image tag
-                    ./kubectl set image deployment/backend backend=yahaligottlieb/devops-backend:${IMAGE_TAG} -n ${NAMESPACE} --record || true
-                    ./kubectl set image deployment/frontend frontend=yahaligottlieb/devops-frontend:${IMAGE_TAG} -n ${NAMESPACE} --record || true
+                    ./kubectl set image deployment/backend backend=yahaligottlieb/devops-backend:${IMAGE_TAG} -n ${NAMESPACE}
+                    ./kubectl set image deployment/frontend frontend=yahaligottlieb/devops-frontend:${IMAGE_TAG} -n ${NAMESPACE}
                     
-                    # Give Kubernetes a brief moment to register the new rollout
                     sleep 5
                 '''
             }
