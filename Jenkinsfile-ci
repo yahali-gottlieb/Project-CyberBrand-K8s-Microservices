@@ -22,6 +22,11 @@ pipeline {
         }
     }
     
+    triggers {
+        githubPush()
+        pollSCM('* * * * *')
+    }
+
     environment {
         DOCKER_HUB_USER = 'yahaligottlieb'
         BACKEND_IMAGE   = 'yahaligottlieb/devops-backend'
