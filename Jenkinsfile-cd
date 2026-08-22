@@ -7,9 +7,10 @@ pipeline {
             spec:
               serviceAccountName: cd-agent-sa
               containers:
-              - name: kubectl
-                image: bitnami/kubectl:latest
-                command: ['cat']
+              - name: shell
+                image: alpine/k8s:1.28.2
+                command:
+                - cat
                 tty: true
             '''
         }
@@ -42,7 +43,7 @@ pipeline {
         
         stage('Deploy to Kubernetes') {
             steps {
-                container('kubectl') {
+                container('shell') {
                     echo "Deploying version ${params.IMAGE_TAG} to namespace ${params.NAMESPACE}..."
                     sh '''
                         # Apply configurations, workloads, and services (excluding example files)
@@ -60,7 +61,7 @@ pipeline {
         
         stage('Verify Rollout') {
             steps {
-                container('kubectl') {
+                container('shell') {
                     echo 'Waiting for Rollout to finish successfully...'
                     sh '''
                         kubectl rollout status deployment/backend -n ${NAMESPACE} --timeout=300s
@@ -72,7 +73,7 @@ pipeline {
         
         stage('Smoke Test') {
             steps {
-                container('kubectl') {
+                container('shell') {
                     echo 'Running smoke test against deployed services...'
                     sh '''
                         kubectl get pods -n ${NAMESPACE}
