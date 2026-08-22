@@ -1,0 +1,73 @@
+controller:
+  componentName: "jenkins-controller"
+  image:
+    registry: "docker.io"
+    repository: "jenkins/jenkins"
+    tag: "lts"
+    pullPolicy: "Always"
+  installPlugins:
+    - "kubernetes"
+    - "workflow-aggregator"
+    - "git"
+    - "configuration-as-code"
+    - "job-dsl"
+  serviceType: "ClusterIP"
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+  persistence:
+    enabled: true
+    storageClass: ""
+    size: "8Gi"
+  
+  JCasC:
+    defaultConfig: true
+    configScripts:
+      welcome-message: |
+        jenkins:
+          systemMessage: "CyberBrand Microservices CI/CD Server"
+      create-jobs: |
+        jobs:
+          - script: >
+              pipelineJob('application-ci') {
+                definition {
+                  cpsScm {
+                    scm {
+                      git {
+                        remote {
+                          url('https://github.com/yahali-gottlieb/Project-CyberBrand-K8s-Microservices.git')
+                        }
+                        branch('*/main')
+                      }
+                    }
+                    scriptPath('Jenkinsfile-ci')
+                  }
+                }
+              }
+              pipelineJob('application-cd') {
+                parameters {
+                  stringParam('IMAGE_TAG', 'v1', 'The immutable image tag built by CI')
+                  stringParam('NAMESPACE', 'devops-app', 'Target Kubernetes Namespace')
+                }
+                definition {
+                  cpsScm {
+                    scm {
+                      git {
+                        remote {
+                          url('https://github.com/yahali-gottlieb/Project-CyberBrand-K8s-Microservices.git')
+                        }
+                        branch('*/main')
+                      }
+                    }
+                    scriptPath('Jenkinsfile-cd')
+                  }
+                }
+              }
+
+serviceAccount:
+  create: true
+  name: jenkins-controller-sa
