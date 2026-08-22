@@ -31,10 +31,23 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 5001
-          envFrom:
-            - configMapRef:
-                name: devops-config
+          # תוקן: הגדרה פרטנית של משתנים בלבד, כדי למנוע זליגת הרשאות AWS לפוד של ה-Backend
           env:
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: devops-config
+                  key: DB_HOST
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: devops-config
+                  key: DB_NAME
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: devops-secrets
+                  key: DB_USER
             - name: DB_PASS
               valueFrom:
                 secretKeyRef:
