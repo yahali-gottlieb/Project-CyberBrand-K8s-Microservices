@@ -1,0 +1,34 @@
+# 1. The ServiceAccount for the CD Agent (Runs in the jenkins namespace)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cd-agent-sa
+  namespace: jenkins
+
+---
+# 2. The Role defining what the CD Agent can do (Scoped to devops-app namespace only)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: cd-deployer-role
+  namespace: devops-app
+rules:
+  - apiGroups: ["", "apps", "batch", "networking.k8s.io", "policy", "autoscaling"]
+    resources: ["*"]
+    verbs: ["*"]
+
+---
+# 3. The RoleBinding connecting the CD Agent SA to the Deployer Role
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cd-agent-deploy-binding
+  namespace: devops-app
+subjects:
+  - kind: ServiceAccount
+    name: cd-agent-sa
+    namespace: jenkins
+roleRef:
+  kind: Role
+  name: cd-deployer-role
+  apiGroup: rbac.authorization.k8s.io

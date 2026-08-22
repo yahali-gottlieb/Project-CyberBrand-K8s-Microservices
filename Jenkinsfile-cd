@@ -1,5 +1,19 @@
 pipeline {
-    agent any
+    agent {
+        kubernetes {
+            yaml '''
+            apiVersion: v1
+            kind: Pod
+            spec:
+              serviceAccountName: cd-agent-sa
+              containers:
+              - name: kubectl
+                image: bitnami/kubectl:latest
+                command: ['cat']
+                tty: true
+            '''
+        }
+    }
     
     parameters {
         string(name: 'IMAGE_TAG', defaultValue: 'v1', description: 'The immutable image tag to deploy')
@@ -28,42 +42,43 @@ pipeline {
         
         stage('Deploy to Kubernetes') {
             steps {
-                echo "Deploying version ${params.IMAGE_TAG} to namespace ${params.NAMESPACE}..."
-                sh '''
-                    if [ ! -f ./kubectl ]; then
-                        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-                        chmod +x kubectl
-                    fi
-                    
-                    # Apply configurations, workloads, and services (excluding example files)
-                    ./kubectl apply -f k8s/
-                    
-                    # Update deployments to use the immutable image tag
-                    ./kubectl set image deployment/backend backend=yahaligottlieb/devops-backend:${IMAGE_TAG} -n ${NAMESPACE}
-                    ./kubectl set image deployment/frontend frontend=yahaligottlieb/devops-frontend:${IMAGE_TAG} -n ${NAMESPACE}
-                    
-                    sleep 5
-                '''
+                container('kubectl') {
+                    echo "Deploying version ${params.IMAGE_TAG} to namespace ${params.NAMESPACE}..."
+                    sh '''
+                        # Apply configurations, workloads, and services (excluding example files)
+                        kubectl apply -f k8s/
+                        
+                        # Update deployments to use the immutable image tag
+                        kubectl set image deployment/backend backend=yahaligottlieb/devops-backend:${IMAGE_TAG} -n ${NAMESPACE}
+                        kubectl set image deployment/frontend frontend=yahaligottlieb/devops-frontend:${IMAGE_TAG} -n ${NAMESPACE}
+                        
+                        sleep 5
+                    '''
+                }
             }
         }
         
         stage('Verify Rollout') {
             steps {
-                echo 'Waiting for Rollout to finish successfully...'
-                sh '''
-                    ./kubectl rollout status deployment/backend -n ${NAMESPACE} --timeout=300s
-                    ./kubectl rollout status deployment/frontend -n ${NAMESPACE} --timeout=300s
-                '''
+                container('kubectl') {
+                    echo 'Waiting for Rollout to finish successfully...'
+                    sh '''
+                        kubectl rollout status deployment/backend -n ${NAMESPACE} --timeout=300s
+                        kubectl rollout status deployment/frontend -n ${NAMESPACE} --timeout=300s
+                    '''
+                }
             }
         }
         
         stage('Smoke Test') {
             steps {
-                echo 'Running smoke test against deployed services...'
-                sh '''
-                    ./kubectl get pods -n ${NAMESPACE}
-                    ./kubectl get svc -n ${NAMESPACE}
-                '''
+                container('kubectl') {
+                    echo 'Running smoke test against deployed services...'
+                    sh '''
+                        kubectl get pods -n ${NAMESPACE}
+                        kubectl get svc -n ${NAMESPACE}
+                    '''
+                }
             }
         }
     }
