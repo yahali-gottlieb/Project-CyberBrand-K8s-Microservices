@@ -180,25 +180,54 @@ cd terraform && terraform destroy
 ## 📸 Project Screenshots
 
 ### Kubernetes Base — Task 3
-1.  **Kubernetes Cluster Nodes:** `screenshots/nodes.png`
-2.  **Namespaces:** `screenshots/namespaces.png`
-3.  **Pods Status & Health:** `screenshots/pods-status.png`
-4.  **Deployments Status:** `screenshots/deployments.png`
-5.  **Services (ClusterIP):** `screenshots/services.png`
-6.  **Ingress Controller:** `screenshots/ingress.png`
-7.  **Self-Healing (Post-Delete):** `screenshots/pod-restart.png`
-8.  **Frontend UI Running:** `screenshots/app-running.png`
-9.  **AWS RDS (DB Available):** `screenshots/aws-rds.png`
-10. **AWS S3 (Automated Report):** `screenshots/aws-s3-report.png`
-11. **AWS SNS (Email Alert):** `screenshots/aws-sns-email.png`
+1. **Kubernetes Cluster Nodes:**
+![Nodes](screenshots/nodes.png)
+
+2. **Namespaces:**
+![Namespaces](screenshots/namespaces.png)
+
+3. **Pods Status & Health:**
+![Pods Status](screenshots/pods-status.png)
+
+4. **Deployments Status:**
+![Deployments](screenshots/deployments.png)
+
+5. **Services (ClusterIP):**
+![Services](screenshots/services.png)
+
+6. **Ingress Controller:**
+![Ingress](screenshots/ingress.png)
+
+7. **Self-Healing (Post-Delete):**
+![Pod Restart](screenshots/pod-restart.png)
+
+8. **Frontend UI Running:**
+![App Running](screenshots/app-running.png)
+
+9. **AWS RDS (DB Available):**
+![AWS RDS](screenshots/aws-rds.png)
+
+10. **AWS S3 (Automated Report):**
+![AWS S3](screenshots/aws-s3-report.png)
+
+11. **AWS SNS (Email Alert):**
+![AWS SNS](screenshots/aws-sns-email.png)
 
 ### Jenkins CI/CD — Task 4
-12. **Architecture Diagram:** `screenshots/architecture.png`
-13. **Jenkins Jobs Created (JCasC):** `screenshots/jenkins-jobs.png`
-14. **CI & CD Pipeline Success:** `screenshots/ci-cd-success.png`
-15. **Dynamic Agents Running in Kubernetes (`kubectl get pods -n jenkins`):** `screenshots/jenkins-agents.png`
-16. **Docker Hub Immutable Tags:** `screenshots/docker-hub-tags.png`jenkins-agents.png`
-17. **Docker Hub Immutable Tags:** `screenshots/docker-hub-tags.png`
+12. **Architecture Diagram:**
+![Architecture](screenshots/architecture.png)
+
+13. **Jenkins Jobs Created (JCasC):**
+![Jenkins Jobs](screenshots/jenkins-jobs.png)
+
+14. **CI & CD Pipeline Success:**
+![CI CD Success](screenshots/ci-cd-success.png)
+
+15. **Dynamic Agents Running in Kubernetes (`kubectl get pods -n jenkins`):**
+![Jenkins Agents](screenshots/jenkins-agents.png)
+
+16. **Docker Hub Immutable Tags:**
+![Docker Hub](screenshots/docker-hub-tags.png)
 
 ---
 
