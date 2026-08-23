@@ -195,9 +195,9 @@ cd terraform && terraform destroy
 ### Jenkins CI/CD — Task 4
 12. **Architecture Diagram:** `screenshots/architecture.png`
 13. **Jenkins Jobs Created (JCasC):** `screenshots/jenkins-jobs.png`
-14. **CI Pipeline Success (Blue Ocean / Console):** `screenshots/ci-success.png`
-15. **CD Pipeline Success (Rollout & Smoke Test):** `screenshots/cd-success.png`
-16. **Dynamic Agents Running in Kubernetes (`kubectl get pods -n jenkins`):** `screenshots/jenkins-agents.png`
+14. **CI & CD Pipeline Success:** `screenshots/ci-cd-success.png`
+15. **Dynamic Agents Running in Kubernetes (`kubectl get pods -n jenkins`):** `screenshots/jenkins-agents.png`
+16. **Docker Hub Immutable Tags:** `screenshots/docker-hub-tags.png`jenkins-agents.png`
 17. **Docker Hub Immutable Tags:** `screenshots/docker-hub-tags.png`
 
 ---
