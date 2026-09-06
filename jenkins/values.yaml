@@ -5,13 +5,19 @@ controller:
     repository: "jenkins/jenkins"
     tag: "lts"
     pullPolicy: "Always"
+  startupProbe:
+    enabled: false
+  livenessProbe:
+    enabled: false
+  readinessProbe:
+    enabled: false
   installPlugins:
     - "kubernetes"
     - "workflow-aggregator"
     - "git"
     - "configuration-as-code"
     - "job-dsl"
-    - "prometheus"  # <--- התקנת הפלאגין
+    - "prometheus"
   serviceType: "ClusterIP"
   resources:
     requests:
@@ -25,17 +31,35 @@ controller:
     storageClass: ""
     size: "8Gi"
   
+  env:
+    - name: DOCKER_USER
+      valueFrom:
+        secretKeyRef:
+          name: docker-secret
+          key: docker-username
+    - name: DOCKER_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: docker-secret
+          key: docker-password
+
   JCasC:
     defaultConfig: true
     configScripts:
-      # הגדרה שמאפשרת לפרומתאוס למשוך מידע ללא הזדהות מוקדמת
-      prometheus-config: |
-        unclassified:
-          prometheusConfiguration:
-            useAuthenticatedEndpoint: false
       welcome-message: |
         jenkins:
           systemMessage: "CyberBrand Microservices CI/CD Server"
+      credentials: |
+        credentials:
+          system:
+            domainCredentials:
+              - credentials:
+                  - usernamePassword:
+                      scope: GLOBAL
+                      id: "docker-hub-credentials"
+                      username: "${DOCKER_USER}"
+                      password: "${DOCKER_PASSWORD}"
+                      description: "DockerHub Credentials securely injected"
       create-jobs: |
         jobs:
           - script: >
@@ -77,3 +101,4 @@ controller:
 serviceAccount:
   create: true
   name: jenkins-controller-sa
+  
