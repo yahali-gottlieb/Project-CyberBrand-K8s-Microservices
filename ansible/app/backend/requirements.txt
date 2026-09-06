@@ -3,3 +3,4 @@ Flask
 Flask-Cors
 psycopg2-binary
 boto3
+prometheus-client==0.20.0
