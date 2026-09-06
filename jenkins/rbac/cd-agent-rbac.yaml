@@ -13,9 +13,9 @@ metadata:
   name: cd-deployer-role
   namespace: devops-app
 rules:
-  # הרשאות מקוריות לאפליקציה (Deployment, Services, Security, etc)
+  # הרשאות מקוריות לאפליקציה כולל namespaces
   - apiGroups: ["", "apps", "batch", "networking.k8s.io", "policy", "autoscaling"]
-    resources: ["services", "configmaps", "secrets", "serviceaccounts", "deployments", "cronjobs", "ingresses", "networkpolicies", "poddisruptionbudgets", "horizontalpodautoscalers"]
+    resources: ["namespaces", "services", "configmaps", "secrets", "serviceaccounts", "deployments", "cronjobs", "ingresses", "networkpolicies", "poddisruptionbudgets", "horizontalpodautoscalers"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
     
   # ההרשאות החדשות למערכת הניטור
