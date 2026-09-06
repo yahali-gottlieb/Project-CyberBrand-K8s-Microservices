@@ -61,10 +61,14 @@ controller:
                       username: "${DOCKER_USER}"
                       password: "${DOCKER_PASSWORD}"
                       description: "DockerHub Credentials securely injected"
-      seed-job: |
+      pipelines: |
         jobs:
           - script: |
-              job('seed-job') {
+              pipelineJob('application-ci') {
+                description('Continuous Integration Pipeline: Tests, builds and pushes container images.')
+                triggers {
+                  githubPush()
+                }
                 definition {
                   cpsScm {
                     scm {
@@ -75,7 +79,27 @@ controller:
                         branch('*/main')
                       }
                     }
-                    scriptPath('jenkins/jobs.groovy')
+                    scriptPath('Jenkinsfile-ci')
+                  }
+                }
+              }
+              pipelineJob('application-cd') {
+                description('Continuous Deployment Pipeline: Deploys immutable image tag to Kubernetes.')
+                parameters {
+                  stringParam('IMAGE_TAG', 'v1', 'The immutable image tag to deploy')
+                  stringParam('NAMESPACE', 'devops-app', 'Target Kubernetes Namespace')
+                }
+                definition {
+                  cpsScm {
+                    scm {
+                      git {
+                        remote {
+                          url('https://github.com/yahali-gottlieb/Project-CyberBrand-K8s-Microservices.git')
+                        }
+                        branch('*/main')
+                      }
+                    }
+                    scriptPath('Jenkinsfile-cd')
                   }
                 }
               }
