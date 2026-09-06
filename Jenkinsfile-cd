@@ -2,17 +2,20 @@ pipeline {
     agent {
         kubernetes {
             yaml '''
-            apiVersion: v1
-            kind: Pod
-            spec:
-              serviceAccountName: cd-agent-sa
-              containers:
-              - name: shell
-                image: alpine/k8s:1.28.2
-                command:
-                - cat
-                tty: true
-            '''
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    jenkins/jenkins-jenkins-agent: "true"
+spec:
+  serviceAccountName: cd-agent-sa
+  containers:
+  - name: shell
+    image: alpine/k8s:1.28.2
+    command:
+    - cat
+    tty: true
+'''
         }
     }
     
@@ -45,16 +48,16 @@ pipeline {
             steps {
                 container('shell') {
                     echo "Deploying version ${params.IMAGE_TAG} to namespace ${params.NAMESPACE}..."
-                    sh '''
-                        # Apply configurations, workloads, and services (excluding example files)
+                    sh """
+                        # Apply configurations, workloads, and services
                         kubectl apply -f k8s/
                         
                         # Update deployments to use the immutable image tag
-                        kubectl set image deployment/backend backend=yahaligottlieb/devops-backend:${IMAGE_TAG} -n ${NAMESPACE}
-                        kubectl set image deployment/frontend frontend=yahaligottlieb/devops-frontend:${IMAGE_TAG} -n ${NAMESPACE}
+                        kubectl set image deployment/backend backend=yahaligottlieb/devops-backend:${params.IMAGE_TAG} -n ${params.NAMESPACE}
+                        kubectl set image deployment/frontend frontend=yahaligottlieb/devops-frontend:${params.IMAGE_TAG} -n ${params.NAMESPACE}
                         
                         sleep 5
-                    '''
+                    """
                 }
             }
         }
@@ -63,10 +66,10 @@ pipeline {
             steps {
                 container('shell') {
                     echo 'Waiting for Rollout to finish successfully...'
-                    sh '''
-                        kubectl rollout status deployment/backend -n ${NAMESPACE} --timeout=300s
-                        kubectl rollout status deployment/frontend -n ${NAMESPACE} --timeout=300s
-                    '''
+                    sh """
+                        kubectl rollout status deployment/backend -n ${params.NAMESPACE} --timeout=300s
+                        kubectl rollout status deployment/frontend -n ${params.NAMESPACE} --timeout=300s
+                    """
                 }
             }
         }
@@ -75,16 +78,15 @@ pipeline {
             steps {
                 container('shell') {
                     echo "Checking Pods and Services health..."
-                    sh 'kubectl get pods -n devops-app'
-                    sh 'kubectl get svc -n devops-app'
+                    sh "kubectl get pods -n ${params.NAMESPACE}"
+                    sh "kubectl get svc -n ${params.NAMESPACE}"
 
                     echo "Executing Post-Deploy Monitoring Gate..."
-                    script {
-                        // 1. Verify that backend service responds to HTTP
-                        sh 'curl -s -f http://backend.devops-app.svc.cluster.local:5001/metrics > /dev/null || (echo "Backend metrics endpoint unreachable!" && exit 1)'
-                        
-                        // 2. Query Prometheus API to ensure the Target is UP
-                        sh '''
+                    // Verify that the backend service metrics endpoint is reachable
+                    sh "curl -s -f http://backend.${params.NAMESPACE}.svc.cluster.local:5001/metrics > /dev/null || (echo 'Backend metrics endpoint unreachable!' && exit 1)"
+                    
+                    // Verify target is UP in Prometheus
+                    sh '''
                         echo "Verifying target status from Prometheus..."
                         TARGET_UP=$(curl -s "http://prometheus-stack-kube-prom-prometheus.monitoring.svc.cluster.local:9090/api/v1/query?query=up%7Bjob%3D%22backend%22%7D" | grep -o '"result":\\[\\]' || true)
                         
@@ -93,11 +95,11 @@ pipeline {
                         else
                             echo "Monitoring Gate Passed: Target is UP and reporting metrics to Prometheus."
                         fi
-                        '''
-                    }
+                    '''
                 }
             }
         }
+    }
     
     post {
         success {
