@@ -11,6 +11,7 @@ controller:
     - "git"
     - "configuration-as-code"
     - "job-dsl"
+    - "prometheus"  # <--- התקנת הפלאגין
   serviceType: "ClusterIP"
   resources:
     requests:
@@ -27,6 +28,11 @@ controller:
   JCasC:
     defaultConfig: true
     configScripts:
+      # הגדרה שמאפשרת לפרומתאוס למשוך מידע ללא הזדהות מוקדמת
+      prometheus-config: |
+        unclassified:
+          prometheusConfiguration:
+            useAuthenticatedEndpoint: false
       welcome-message: |
         jenkins:
           systemMessage: "CyberBrand Microservices CI/CD Server"
