@@ -1,0 +1,6 @@
+prometheus:
+  prometheusSpec:
+    # מבטל את ההגבלה ומאפשר לפרומתאוס לחפש יעדים בכל הקלסטר
+    serviceMonitorNamespaceSelector: {}
+    podMonitorNamespaceSelector: {}
+    ruleNamespaceSelector: {}

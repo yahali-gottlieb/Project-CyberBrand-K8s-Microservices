@@ -15,7 +15,7 @@ metadata:
 rules:
   # הרשאות מקוריות לאפליקציה כולל namespaces
   - apiGroups: ["", "apps", "batch", "networking.k8s.io", "policy", "autoscaling"]
-    resources: ["namespaces", "services", "configmaps", "secrets", "serviceaccounts", "deployments", "cronjobs", "ingresses", "networkpolicies", "poddisruptionbudgets", "horizontalpodautoscalers"]
+    resources: ["namespaces", "pods", "services", "configmaps", "secrets", "serviceaccounts", "deployments", "cronjobs", "ingresses", "networkpolicies", "poddisruptionbudgets", "horizontalpodautoscalers"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
     
   # ההרשאות החדשות למערכת הניטור
