@@ -18,6 +18,7 @@ controller:
     - "configuration-as-code"
     - "job-dsl"
     - "prometheus"
+    - "github"
   serviceType: "ClusterIP"
   resources:
     requests:
