@@ -1,6 +1,9 @@
 // Pipeline 1: application-ci
 pipelineJob('application-ci') {
     description('Continuous Integration Pipeline: Tests, builds and pushes container images.')
+    triggers {
+        githubPush() // <--- זה מה שאומר לג'נקינס להאזין ל-Webhook
+    }
     definition {
         cpsScm {
             scm {
