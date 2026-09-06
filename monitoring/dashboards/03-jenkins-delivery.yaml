@@ -1,0 +1,96 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-jenkins
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  jenkins-delivery.json: |
+    {
+      "annotations": { "list": [] },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 0,
+      "id": null,
+      "links": [],
+      "liveNow": false,
+      "panels": [
+        {
+          "title": "Jenkins Queue Length (QueueStuck Check)",
+          "type": "stat",
+          "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+          "targets": [
+            {
+              "expr": "jenkins_queue_size_value or on() vector(0)",
+              "legendFormat": "Queue Size",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "red", "value": 3 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "title": "Active Dynamic Agents",
+          "type": "stat",
+          "gridPos": { "h": 5, "w": 6, "x": 6, "y": 0 },
+          "targets": [
+            {
+              "expr": "sum(jenkins_node_online_value{node!=\"Built-In Node\"}) or on() vector(0)",
+              "legendFormat": "Connected Agents",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "title": "Jenkins Controller JVM Memory Usage",
+          "type": "timeseries",
+          "gridPos": { "h": 5, "w": 12, "x": 12, "y": 0 },
+          "targets": [
+            {
+              "expr": "vm_memory_heap_used{job=\"jenkins\"}",
+              "legendFormat": "Heap Used",
+              "refId": "A"
+            },
+            {
+              "expr": "vm_memory_heap_committed{job=\"jenkins\"}",
+              "legendFormat": "Heap Committed",
+              "refId": "B"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": { "unit": "bytes" }
+          }
+        },
+        {
+          "title": "CI/CD Pipeline Execution Duration",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 5 },
+          "targets": [
+            {
+              "expr": "jenkins_builds_duration_milliseconds_summary{quantile=\"0.5\"} / 1000",
+              "legendFormat": "Job: {{job_name}} (p50)",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": { "unit": "s" }
+          }
+        }
+      ],
+      "schemaVersion": 38,
+      "style": "dark",
+      "tags": ["jenkins", "delivery"],
+      "time": { "from": "now-1h", "to": "now" },
+      "title": "Jenkins & Delivery Overview",
+      "uid": "jenkins-delivery"
+    }

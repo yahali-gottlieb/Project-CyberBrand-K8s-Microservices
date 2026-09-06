@@ -1,0 +1,77 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: devops-project-alerts
+  namespace: monitoring
+  labels:
+    release: prometheus-stack
+    role: alert-rules
+spec:
+  groups:
+  - name: application.alerts
+    rules:
+    - alert: HighErrorRate
+      expr: sum(rate(flask_http_request_total{status=~"5..", namespace="devops-app"}[5m])) / sum(rate(flask_http_request_total{namespace="devops-app"}[5m])) * 100 > 5
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: "High 5xx HTTP Error Rate detected"
+        description: "Application 5xx error rate exceeds 5% over 5 minutes window."
+        runbook_url: "https://github.com/yahali-gottlieb/Project-CyberBrand-K8s-Microservices/blob/main/docs/runbooks/high-error-rate.md"
+
+    - alert: HighLatencyP95
+      expr: histogram_quantile(0.95, sum(rate(flask_http_request_duration_seconds_bucket{namespace="devops-app"}[5m])) by (le)) > 2
+      for: 3m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High p95 Latency breaching SLO threshold"
+        description: "95th percentile latency is higher than 2 seconds for over 3 minutes."
+        runbook_url: "https://github.com/yahali-gottlieb/Project-CyberBrand-K8s-Microservices/blob/main/docs/runbooks/high-latency.md"
+
+  - name: kubernetes.alerts
+    rules:
+    - alert: ReplicasMismatch
+      expr: kube_deployment_status_replicas_available{namespace="devops-app"} < kube_deployment_spec_replicas{namespace="devops-app"}
+      for: 3m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Deployment available replicas mismatch"
+        description: "Available replicas in devops-app are less than desired replicas for over 3 minutes."
+        runbook_url: "https://github.com/yahali-gottlieb/Project-CyberBrand-K8s-Microservices/blob/main/docs/runbooks/replicas-mismatch.md"
+
+    - alert: NodeNotReady
+      expr: kube_node_status_condition{condition="Ready", status="true"} == 0
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Kubernetes Node is Not Ready"
+        description: "Node has been unready for more than 2 minutes."
+        runbook_url: "https://github.com/yahali-gottlieb/Project-CyberBrand-K8s-Microservices/blob/main/docs/runbooks/node-not-ready.md"
+
+  - name: jenkins.alerts
+    rules:
+    - alert: JenkinsQueueStuck
+      expr: jenkins_queue_size_value > 2
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Jenkins Job Queue is Stuck"
+        description: "Jenkins build queue has more than 2 waiting jobs for over 5 minutes."
+        runbook_url: "https://github.com/yahali-gottlieb/Project-CyberBrand-K8s-Microservices/blob/main/docs/runbooks/jenkins-queue-stuck.md"
+
+  - name: monitoring.alerts
+    rules:
+    - alert: PrometheusTargetDown
+      expr: up{job=~"backend|jenkins|kube-state-metrics"} == 0
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Prometheus Monitoring Target is DOWN"
+        description: "One or more core targets are unreachable by Prometheus scraper."
+        runbook_url: "https://github.com/yahali-gottlieb/Project-CyberBrand-K8s-Microservices/blob/main/docs/runbooks/target-down.md"

@@ -1,4 +1,6 @@
+# ==============================================================================
 # 1. The ServiceAccount for the CD Agent (Runs in the jenkins namespace)
+# ==============================================================================
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -6,25 +8,38 @@ metadata:
   namespace: jenkins
 
 ---
-# 2. The Role defining what the CD Agent can do (Scoped to devops-app namespace only)
+# ==============================================================================
+# 2. Permissions for devops-app Namespace (Application deployment & local monitoring)
+# ==============================================================================
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: cd-deployer-role
   namespace: devops-app
 rules:
-  # הרשאות מקוריות לאפליקציה כולל namespaces
+  # App resources
   - apiGroups: ["", "apps", "batch", "networking.k8s.io", "policy", "autoscaling"]
-    resources: ["namespaces", "pods", "services", "configmaps", "secrets", "serviceaccounts", "deployments", "cronjobs", "ingresses", "networkpolicies", "poddisruptionbudgets", "horizontalpodautoscalers"]
+    resources:
+      - namespaces
+      - pods
+      - services
+      - configmaps
+      - secrets
+      - serviceaccounts
+      - deployments
+      - cronjobs
+      - ingresses
+      - networkpolicies
+      - poddisruptionbudgets
+      - horizontalpodautoscalers
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
     
-  # ההרשאות החדשות למערכת הניטור
+  # Monitoring resources in devops-app
   - apiGroups: ["monitoring.coreos.com"]
     resources: ["servicemonitors", "podmonitors", "prometheusrules"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 
 ---
-# 3. The RoleBinding connecting the CD Agent SA to the Deployer Role
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
@@ -37,4 +52,33 @@ subjects:
 roleRef:
   kind: Role
   name: cd-deployer-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# ==============================================================================
+# 3. Permissions for jenkins Namespace (Managing jenkins-servicemonitor)
+# ==============================================================================
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: cd-agent-monitoring-role
+  namespace: jenkins
+rules:
+  - apiGroups: ["monitoring.coreos.com"]
+    resources: ["servicemonitors"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cd-agent-monitoring-binding
+  namespace: jenkins
+subjects:
+  - kind: ServiceAccount
+    name: cd-agent-sa
+    namespace: jenkins
+roleRef:
+  kind: Role
+  name: cd-agent-monitoring-role
   apiGroup: rbac.authorization.k8s.io

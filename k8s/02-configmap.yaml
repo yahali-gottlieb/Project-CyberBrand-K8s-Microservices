@@ -4,11 +4,22 @@ metadata:
   name: devops-config
   namespace: devops-app
 data:
-  # AWS Settings
+  # ==========================================
+  # AWS Cloud Settings (Production / Terraform)
+  # ==========================================
   AWS_REGION: "us-east-1"
   S3_BUCKET_NAME: "devops-project-bucket-yahali-v2"
   SNS_TOPIC_NAME: "devops-app-alerts"
   
-  # Database Settings
+  # ==========================================
+  # Database Settings - ACTIVE: Local Cluster
+  # ==========================================
   DB_NAME: "appdb"
-  DB_HOST: "terraform-20260729110809811400000001.c0peysi8mfyf.us-east-1.rds.amazonaws.com"
+  DB_HOST: "postgres"
+  DB_PORT: "5432"
+
+  # ==========================================
+  # Database Settings - ARCHIVED: AWS RDS
+  # (Uncomment when running against live AWS RDS)
+  # ==========================================
+  # DB_HOST: "terraform-20260729110809811400000001.c0peysi8mfyf.us-east-1.rds.amazonaws.com"

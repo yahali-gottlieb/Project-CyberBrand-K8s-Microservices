@@ -1,0 +1,112 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-kubernetes
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  k8s-cluster.json: |
+    {
+      "annotations": { "list": [] },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 0,
+      "id": null,
+      "links": [],
+      "liveNow": false,
+      "panels": [
+        {
+          "title": "Nodes Readiness Status",
+          "type": "stat",
+          "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+          "targets": [
+            {
+              "expr": "sum(kube_node_status_condition{condition=\"Ready\", status=\"true\"})",
+              "legendFormat": "Ready Nodes",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "red", "value": null },
+                  { "color": "green", "value": 1 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "title": "Deployments Replicas Match (Available vs Desired)",
+          "type": "stat",
+          "gridPos": { "h": 5, "w": 9, "x": 6, "y": 0 },
+          "targets": [
+            {
+              "expr": "sum(kube_deployment_status_replicas_available{namespace=\"devops-app\"}) / sum(kube_deployment_spec_replicas{namespace=\"devops-app\"}) * 100",
+              "legendFormat": "Available %",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "red", "value": null },
+                  { "color": "green", "value": 100 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "title": "Total Pod Restarts in App Namespace",
+          "type": "stat",
+          "gridPos": { "h": 5, "w": 9, "x": 15, "y": 0 },
+          "targets": [
+            {
+              "expr": "sum(increase(kube_pod_container_status_restarts_total{namespace=\"devops-app\"}[1h]))",
+              "legendFormat": "Restarts (Last 1h)",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 1 },
+                  { "color": "red", "value": 3 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "title": "Pods Health and State",
+          "type": "table",
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 5 },
+          "targets": [
+            {
+              "expr": "kube_pod_status_phase{namespace=\"devops-app\", phase=\"Running\"} == 1",
+              "format": "table",
+              "instant": true,
+              "refId": "A"
+            }
+          ]
+        }
+      ],
+      "schemaVersion": 38,
+      "style": "dark",
+      "tags": ["kubernetes", "cluster"],
+      "time": { "from": "now-30m", "to": "now" },
+      "title": "Kubernetes Cluster Health",
+      "uid": "k8s-cluster"
+    }

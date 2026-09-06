@@ -1,0 +1,121 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-application
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  application-overview.json: |
+    {
+      "annotations": { "list": [] },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 0,
+      "id": null,
+      "links": [],
+      "liveNow": false,
+      "panels": [
+        {
+          "title": "Application Availability (SLO Target: 99%)",
+          "type": "gauge",
+          "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+          "targets": [
+            {
+              "expr": "sum(rate(flask_http_request_total{status!~\"5..\", namespace=\"devops-app\"}[5m])) / sum(rate(flask_http_request_total{namespace=\"devops-app\"}[5m])) * 100 or on() vector(100)",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "min": 90, "max": 100, "unit": "percent",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "red", "value": null },
+                  { "color": "yellow", "value": 95 },
+                  { "color": "green", "value": 99 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "title": "Request Rate (RPS)",
+          "type": "timeseries",
+          "gridPos": { "h": 6, "w": 9, "x": 6, "y": 0 },
+          "targets": [
+            {
+              "expr": "sum(rate(flask_http_request_total{namespace=\"devops-app\"}[1m])) by (status)",
+              "legendFormat": "Status: {{status}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "title": "5xx Error Rate",
+          "type": "timeseries",
+          "gridPos": { "h": 6, "w": 9, "x": 15, "y": 0 },
+          "targets": [
+            {
+              "expr": "sum(rate(flask_http_request_total{status=~\"5..\", namespace=\"devops-app\"}[1m])) or on() vector(0)",
+              "legendFormat": "5xx Errors",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "fixed", "fixedColor": "red" }
+            }
+          }
+        },
+        {
+          "title": "Latency (p50, p95, p99)",
+          "type": "timeseries",
+          "gridPos": { "h": 7, "w": 12, "x": 0, "y": 6 },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.50, sum(rate(flask_http_request_duration_seconds_bucket{namespace=\"devops-app\"}[5m])) by (le))",
+              "legendFormat": "p50",
+              "refId": "A"
+            },
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(flask_http_request_duration_seconds_bucket{namespace=\"devops-app\"}[5m])) by (le))",
+              "legendFormat": "p95",
+              "refId": "B"
+            },
+            {
+              "expr": "histogram_quantile(0.99, sum(rate(flask_http_request_duration_seconds_bucket{namespace=\"devops-app\"}[5m])) by (le))",
+              "legendFormat": "p99",
+              "refId": "C"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": { "unit": "s" }
+          }
+        },
+        {
+          "title": "Backend Pods Resource Usage (CPU & Memory)",
+          "type": "timeseries",
+          "gridPos": { "h": 7, "w": 12, "x": 12, "y": 6 },
+          "targets": [
+            {
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"devops-app\", container=\"backend\"}[1m])) by (pod)",
+              "legendFormat": "CPU: {{pod}}",
+              "refId": "A"
+            },
+            {
+              "expr": "sum(container_memory_working_set_bytes{namespace=\"devops-app\", container=\"backend\"}) by (pod)",
+              "legendFormat": "Memory: {{pod}}",
+              "refId": "B"
+            }
+          ]
+        }
+      ],
+      "schemaVersion": 38,
+      "style": "dark",
+      "tags": ["application", "devops"],
+      "time": { "from": "now-15m", "to": "now" },
+      "title": "Application Overview",
+      "uid": "app-overview"
+    }
