@@ -32,7 +32,7 @@ controller:
     storageClass: ""
     size: "8Gi"
   
-  env:
+  containerEnv:
     - name: DOCKER_USER
       valueFrom:
         secretKeyRef:
@@ -57,7 +57,7 @@ controller:
               - credentials:
                   - usernamePassword:
                       scope: GLOBAL
-                      id: "docker-hub-credentials"
+                      id: "dockerhub-creds"
                       username: "${DOCKER_USER}"
                       password: "${DOCKER_PASSWORD}"
                       description: "DockerHub Credentials securely injected"
