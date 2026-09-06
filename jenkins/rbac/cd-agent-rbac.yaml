@@ -13,9 +13,15 @@ metadata:
   name: cd-deployer-role
   namespace: devops-app
 rules:
+  # הרשאות מקוריות לאפליקציה (Deployment, Services, Security, etc)
   - apiGroups: ["", "apps", "batch", "networking.k8s.io", "policy", "autoscaling"]
-    resources: ["*"]
-    verbs: ["*"]
+    resources: ["services", "configmaps", "secrets", "serviceaccounts", "deployments", "cronjobs", "ingresses", "networkpolicies", "poddisruptionbudgets", "horizontalpodautoscalers"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+    
+  # ההרשאות החדשות למערכת הניטור
+  - apiGroups: ["monitoring.coreos.com"]
+    resources: ["servicemonitors", "podmonitors", "prometheusrules"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 
 ---
 # 3. The RoleBinding connecting the CD Agent SA to the Deployer Role
