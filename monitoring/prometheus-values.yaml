@@ -4,3 +4,28 @@ prometheus:
     serviceMonitorNamespaceSelector: {}
     podMonitorNamespaceSelector: {}
     ruleNamespaceSelector: {}
+
+alertmanager:
+  config:
+    global:
+      smtp_smarthost: 'smtp.gmail.com:587'
+      smtp_from: 'yahaligottlieb@gmail.com'
+      smtp_auth_username: 'yahaligottlieb@gmail.com'
+      smtp_auth_identity: 'yahaligottlieb@gmail.com'
+      smtp_require_tls: true
+    route:
+      receiver: 'email-notifications'
+      group_by: ['alertname', 'namespace']
+      group_wait: 10s
+      group_interval: 1m
+      repeat_interval: 1h
+      routes:
+      - match:
+          namespace: 'devops-app'        
+          severity: warning
+        receiver: 'email-notifications'
+    receivers:
+    - name: 'email-notifications'
+      email_configs:
+      - to: 'yahaligottlieb@gmail.com'
+        send_resolved: true
