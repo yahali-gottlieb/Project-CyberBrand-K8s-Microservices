@@ -34,7 +34,7 @@ spec:
     rules:
     - alert: ReplicasMismatch
       expr: kube_deployment_status_replicas_available{namespace="devops-app"} < kube_deployment_spec_replicas{namespace="devops-app"}
-      for: 3m
+      for: 30s
       labels:
         severity: warning
       annotations:
