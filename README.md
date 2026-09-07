@@ -270,34 +270,70 @@ cd terraform && terraform destroy
 ## 📸 Project Screenshots
 
 ### Kubernetes Base — Task 3
+1. **Kubernetes Cluster Nodes:**
+![Nodes](screenshots/nodes.png)
 
-1. **Kubernetes Cluster Nodes**
-2. **Namespaces**
-3. **Pods Status & Health**
-4. **Deployments Status**
-5. **Services (ClusterIP)**
-6. **Ingress Controller**
-7. **Self-Healing (Post-Delete)**
-8. **Frontend UI Running**
-9. **AWS RDS (DB Available)**
-10. **AWS S3 (Automated Report)**
-11. **AWS SNS (Email Alert)**
+2. **Namespaces:**
+![Namespaces](screenshots/namespaces.png)
+
+3. **Pods Status & Health:**
+![Pods Status](screenshots/pods-status.png)
+
+4. **Deployments Status:**
+![Deployments](screenshots/deployments.png)
+
+5. **Services (ClusterIP):**
+![Services](screenshots/services.png)
+
+6. **Ingress Controller:**
+![Ingress](screenshots/ingress.png)
+
+7. **Self-Healing (Post-Delete):**
+![Pod Restart](screenshots/pod-restart.png)
+
+8. **Frontend UI Running:**
+![App Running](screenshots/app-running.png)
+
+9. **AWS RDS (DB Available):**
+![AWS RDS](screenshots/aws-rds.png)
+
+10. **AWS S3 (Automated Report):**
+![AWS S3](screenshots/aws-s3-report.png)
+
+11. **AWS SNS (Email Alert):**
+![AWS SNS](screenshots/aws-sns-email.png)
 
 ### Jenkins CI/CD — Task 4
+12. **Architecture Diagram:**
+![Architecture](screenshots/architecture.png)
 
-12. **Architecture Diagram**
-13. **Jenkins Jobs Created (JCasC)**
-14. **CI & CD Pipeline Success**
-15. **Dynamic Agents Running in Kubernetes (`kubectl get pods -n jenkins`)**
-16. **Docker Hub Immutable Tags**
+13. **Jenkins Jobs Created (JCasC):**
+![Jenkins Jobs](screenshots/jenkins-jobs.png)
+
+14. **CI & CD Pipeline Success:**
+![CI CD Success](screenshots/ci-cd-success.png)
+
+15. **Dynamic Agents Running in Kubernetes:**
+![Jenkins Agents](screenshots/jenkins-agents.png)
+
+16. **Docker Hub Immutable Tags:**
+![Docker Hub](screenshots/docker-hub-tags.png)
 
 ### Observability & Monitoring — Final Project Task 5
+17. **Grafana Application Overview:**
+![Grafana Application Overview](screenshots/grafana-app-overview.png)
 
-17. **Grafana Application Overview**
-18. **Grafana Kubernetes Cluster Health**
-19. **Grafana Jenkins Delivery**
-20. **Prometheus Targets UP**
-21. **Prometheus Alerts Firing (Failure Drill)**
+18. **Grafana Kubernetes Cluster Health:**
+![Grafana Kubernetes Cluster Health](screenshots/grafana-cluster-health.png)
+
+19. **Grafana Jenkins Delivery:**
+![Grafana Jenkins Delivery](screenshots/grafana-jenkins-delivery.png)
+
+20. **Prometheus Targets UP:**
+![Prometheus Targets](screenshots/prometheus-targets.png)
+
+21. **Prometheus Alerts Firing (Failure Drill):**
+![Prometheus Alerts Firing](screenshots/prometheus-alerts-firing.png)
 
 ---
 
