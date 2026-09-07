@@ -196,10 +196,16 @@ helm upgrade --install jenkins jenkins/jenkins -n jenkins -f jenkins/values.yaml
 
 #### Prometheus Stack
 
+Alertmanager email credentials are injected during installation via Helm values flags, ensuring sensitive App Passwords are never committed to source control:
+
 ```bash
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
-helm upgrade --install prometheus-stack prometheus-community/kube-prometheus-stack -n monitoring -f monitoring/prometheus-values.yaml
+
+helm upgrade --install prometheus-stack prometheus-community/kube-prometheus-stack \
+  -n monitoring \
+  -f monitoring/prometheus-values.yaml \
+  --set alertmanager.config.global.smtp_auth_password="<YOUR_GMAIL_APP_PASSWORD>"
 ```
 
 Access Jenkins at `http://localhost:8080` (requires port-forwarding):
@@ -243,6 +249,31 @@ Simply push a commit to the `main` branch of the repository. The `pollSCM` trigg
 
 ---
 
+## ⚡ Quick Start: Unified Demo Automation
+
+To access all services simultaneously during live evaluation without managing multiple terminal windows, execute the root orchestration script:
+
+```bash
+chmod +x start-demo.sh
+./start-demo.sh
+```
+
+This single-command automation cleans up existing ports, binds loopback IPv4 interfaces to prevent macOS socket drops, and exposes the full stack:
+
+| **Service** | **Target URL** | **Namespace** |
+|---|---|---|
+| **Grafana Dashboards** | `http://127.0.0.1:3000` | `monitoring` |
+| **Prometheus Core** | `http://127.0.0.1:9090` | `monitoring` |
+| **Alertmanager UI** | `http://127.0.0.1:9093` | `monitoring` |
+| **Jenkins Master** | `http://127.0.0.1:8888` | `jenkins` |
+| **Frontend Application** | `http://127.0.0.1:8081` | `devops-app` |
+| **Backend API** | `http://127.0.0.1:5001` | `devops-app` |
+| **Jenkins Webhook Tunnel** | `https://tipped-acre-supremacy.ngrok-free.dev` | `external` |
+
+Press `Ctrl + C` at any point to terminate all background tunnels and release the ports cleanly.
+
+---
+
 ## 🛠️ Rollback Procedure
 
 If a CD rollout fails or an Alertmanager incident triggers (e.g., `HighErrorRate` or `ReplicasMismatch`), execute the native Kubernetes rollback mechanism as defined in the Runbooks:
@@ -270,70 +301,76 @@ cd terraform && terraform destroy
 ## 📸 Project Screenshots
 
 ### Kubernetes Base — Task 3
+
 1. **Kubernetes Cluster Nodes:**
-![Nodes](screenshots/nodes.png)
+   ![Kubernetes Cluster Nodes](screenshots/nodes.png)
 
 2. **Namespaces:**
-![Namespaces](screenshots/namespaces.png)
+   ![Namespaces](screenshots/namespaces.png)
 
 3. **Pods Status & Health:**
-![Pods Status](screenshots/pods-status.png)
+   ![Pods Status & Health](screenshots/pods-status.png)
 
 4. **Deployments Status:**
-![Deployments](screenshots/deployments.png)
+   ![Deployments Status](screenshots/deployments.png)
 
 5. **Services (ClusterIP):**
-![Services](screenshots/services.png)
+   ![Services (ClusterIP)](screenshots/services.png)
 
 6. **Ingress Controller:**
-![Ingress](screenshots/ingress.png)
+   ![Ingress Controller](screenshots/ingress.png)
 
 7. **Self-Healing (Post-Delete):**
-![Pod Restart](screenshots/pod-restart.png)
+   ![Self-Healing (Post-Delete)](screenshots/pod-restart.png)
 
 8. **Frontend UI Running:**
-![App Running](screenshots/app-running.png)
+   ![Frontend UI Running](screenshots/app-running.png)
 
 9. **AWS RDS (DB Available):**
-![AWS RDS](screenshots/aws-rds.png)
+   ![AWS RDS (DB Available)](screenshots/aws-rds.png)
 
 10. **AWS S3 (Automated Report):**
-![AWS S3](screenshots/aws-s3-report.png)
+    ![AWS S3 (Automated Report)](screenshots/aws-s3-report.png)
 
 11. **AWS SNS (Email Alert):**
-![AWS SNS](screenshots/aws-sns-email.png)
+    ![AWS SNS (Email Alert)](screenshots/aws-sns-email.png)
 
 ### Jenkins CI/CD — Task 4
+
 12. **Architecture Diagram:**
-![Architecture](screenshots/architecture.png)
+    ![Architecture Diagram](screenshots/architecture.png)
 
 13. **Jenkins Jobs Created (JCasC):**
-![Jenkins Jobs](screenshots/jenkins-jobs.png)
+    ![Jenkins Jobs Created (JCasC)](screenshots/jenkins-jobs.png)
 
 14. **CI & CD Pipeline Success:**
-![CI CD Success](screenshots/ci-cd-success.png)
+    ![CI & CD Pipeline Success](screenshots/ci-cd-success.png)
 
 15. **Dynamic Agents Running in Kubernetes:**
-![Jenkins Agents](screenshots/jenkins-agents.png)
+    ![Dynamic Agents Running in Kubernetes](screenshots/jenkins-agents.png)
 
 16. **Docker Hub Immutable Tags:**
-![Docker Hub](screenshots/docker-hub-tags.png)
+    ![Docker Hub Immutable Tags](screenshots/docker-hub-tags.png)
 
 ### Observability & Monitoring — Final Project Task 5
+
 17. **Grafana Application Overview:**
-![Grafana Application Overview](screenshots/grafana-app-overview.png)
+    ![Grafana Application Overview](screenshots/grafana-app-overview.png)
 
 18. **Grafana Kubernetes Cluster Health:**
-![Grafana Kubernetes Cluster Health](screenshots/grafana-cluster-health.png)
+    ![Grafana Kubernetes Cluster Health](screenshots/grafana-cluster-health.png)
 
 19. **Grafana Jenkins Delivery:**
-![Grafana Jenkins Delivery](screenshots/grafana-jenkins-delivery.png)
+    ![Grafana Jenkins Delivery](screenshots/grafana-jenkins-delivery.png)
 
 20. **Prometheus Targets UP:**
-![Prometheus Targets](screenshots/prometheus-targets.png)
+    ![Prometheus Targets UP](screenshots/prometheus-targets.png)
 
 21. **Prometheus Alerts Firing (Failure Drill):**
-![Prometheus Alerts Firing](screenshots/prometheus-alerts-firing.png)
+    ![Prometheus Alerts Firing (Failure Drill)](screenshots/prometheus-alerts-firing.png)
+
+22. **Alertmanager Email Notification (Firing & Resolved):**
+    ![Alertmanager Email Notification (Firing & Resolved)](screenshots/alertmanager-email.png)
 
 ---
 
